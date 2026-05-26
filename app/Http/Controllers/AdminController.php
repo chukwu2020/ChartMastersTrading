@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+
 class AdminController extends Controller
 {
     public function userIndex(Request $request)
@@ -191,59 +192,59 @@ class AdminController extends Controller
 
 
 
-// In AdminController.php
-public function showApprovedWithdrawals()
-{
-    // Get all approved withdrawals (both balance and investment transfers)
-    $approvedWithdrawals = Withdrawal::whereIn('status', ['approved', 'rejected'])
-        ->with(['user'])
-        ->latest()
-        ->get();
+    // In AdminController.php
+    public function showApprovedWithdrawals()
+    {
+        // Get all approved withdrawals (both balance and investment transfers)
+        $approvedWithdrawals = Withdrawal::whereIn('status', ['approved', 'rejected'])
+            ->with(['user'])
+            ->latest()
+            ->get();
 
-    $withdrawalCards = WithdrawalCard::all();
+        $withdrawalCards = WithdrawalCard::all();
 
-    return view('admin.deposits.withdrawal_approved', compact('approvedWithdrawals', 'withdrawalCards'));
-}
-
- public function unapproveBalanceWithdrawal(Request $request, $id)
-{
-    $request->validate([
-        'admin_note' => 'required|string|max:500',
-    ]);
-
-    $withdrawal = Withdrawal::findOrFail($id);
-
-    // Check if already rejected/failed
-    if ($withdrawal->status !== 'approved') {
-        return back()->with('error', 'This withdrawal has already been processed.');
+        return view('admin.deposits.withdrawal_approved', compact('approvedWithdrawals', 'withdrawalCards'));
     }
 
-    DB::transaction(function () use ($request, $withdrawal) {
-        // Refund the amount back to user's balance
-        $user = $withdrawal->user;
-        $user->available_balance += $withdrawal->amount;
-        $user->save();
+    public function unapproveBalanceWithdrawal(Request $request, $id)
+    {
+        $request->validate([
+            'admin_note' => 'required|string|max:500',
+        ]);
 
-        // Mark as rejected (which will show as "Failed" to users)
-        $withdrawal->status = 'rejected';
-        $withdrawal->admin_note = $request->admin_note;
-        $withdrawal->save();
+        $withdrawal = Withdrawal::findOrFail($id);
 
-        // Send notification to user
-        try {
-            $user->notify(new TransactionNotification(
-                'Withdrawal Failed',
-                'Your withdrawal request of $' . number_format($withdrawal->amount, 2) . 
-                ' has failed. Reason: ' . $request->admin_note . "\n" .
-                'Funds have been returned to your balance.'
-            ));
-        } catch (\Exception $e) {
-            \Log::error('Notification failed: ' . $e->getMessage());
+        // Check if already rejected/failed
+        if ($withdrawal->status !== 'approved') {
+            return back()->with('error', 'This withdrawal has already been processed.');
         }
-    });
 
-    return redirect()->back()->with('success', 'Withdrawal marked as failed and amount refunded.');
-}
+        DB::transaction(function () use ($request, $withdrawal) {
+            // Refund the amount back to user's balance
+            $user = $withdrawal->user;
+            $user->available_balance += $withdrawal->amount;
+            $user->save();
+
+            // Mark as rejected (which will show as "Failed" to users)
+            $withdrawal->status = 'rejected';
+            $withdrawal->admin_note = $request->admin_note;
+            $withdrawal->save();
+
+            // Send notification to user
+            try {
+                $user->notify(new TransactionNotification(
+                    'Withdrawal Failed',
+                    'Your withdrawal request of $' . number_format($withdrawal->amount, 2) .
+                        ' has failed. Reason: ' . $request->admin_note . "\n" .
+                        'Funds have been returned to your balance.'
+                ));
+            } catch (\Exception $e) {
+                \Log::error('Notification failed: ' . $e->getMessage());
+            }
+        });
+
+        return redirect()->back()->with('success', 'Withdrawal marked as failed and amount refunded.');
+    }
 
     // ✅ FIXED: Generate Membership Code
 
@@ -342,7 +343,7 @@ public function showApprovedWithdrawals()
         $totalDeposits = User::sum('available_balance');
         $pendingDepositsCount = Deposit::where('status', 'pending')->count();
 
-   $pendingWithdrawalsCount = Withdrawal::where('status', 'pending')->count();
+        $pendingWithdrawalsCount = Withdrawal::where('status', 'pending')->count();
         $pendingCopyCount = CopyTradingRequest::where('status', 'pending')->count();
 
         $totalWithdrawals = Withdrawal::where('status', 'approved')
@@ -350,17 +351,17 @@ public function showApprovedWithdrawals()
             ->sum('amount');
         $amount_invested = Investment::sum('amount_invested');
         $user = auth()->user();
-      return view('admin.index', compact(
-    'totalUsers',
-    'totalDeposits',
-    'totalWithdrawals',
-    'amount_invested',
-    'user',
-    'pendingDepositsCount',
-    'pendingCopyCount',
-    'pendingWithdrawalsCount'
+        return view('admin.index', compact(
+            'totalUsers',
+            'totalDeposits',
+            'totalWithdrawals',
+            'amount_invested',
+            'user',
+            'pendingDepositsCount',
+            'pendingCopyCount',
+            'pendingWithdrawalsCount'
 
-));
+        ));
     }
 
     public function adminViewWithdrawals()
@@ -396,7 +397,7 @@ public function showApprovedWithdrawals()
         return back()->with('success', 'Withdrawal approved successfully.');
     }
 
-   
+
 
     public function index()
     {
@@ -1092,261 +1093,261 @@ public function showApprovedWithdrawals()
 
     // In AdminController.php
 
-    
 
-public function pendingCopyRequests()
-{
-    return view('admin.copytrading.pending', [
-        'pendingRequests' => CopyTradingRequest::with(['user', 'plan', 'admin'])
-            ->where('status', 'pending')
-            ->latest()
-            ->get(),
 
-        'approvedRequests' => CopyTradingRequest::with(['user', 'plan', 'admin', 'processor'])
-            ->where('status', 'approved')
-            ->latest('approved_at')
-            ->get(),
+    public function pendingCopyRequests()
+    {
+        return view('admin.copytrading.pending', [
+            'pendingRequests' => CopyTradingRequest::with(['user', 'plan', 'admin'])
+                ->where('status', 'pending')
+                ->latest()
+                ->get(),
 
-        'rejectedRequests' => CopyTradingRequest::with(['user', 'plan', 'admin', 'processor'])
-            ->where('status', 'rejected')
-            ->latest('rejected_at')
-            ->get(),
-    ]);
-}
+            'approvedRequests' => CopyTradingRequest::with(['user', 'plan', 'admin', 'processor'])
+                ->where('status', 'approved')
+                ->latest('approved_at')
+                ->get(),
 
-////////////////////////////////////////////////////////////
-
-public function copypending()
-{
-    return redirect()->route('admin.copy-trading.pendingCopyRequests');
-}
-
-public function copyapproved()
-{
-    return redirect()->route('admin.copy-trading.pendingCopyRequests', ['tab' => 'approved']);
-}
-
-public function copyrejected()
-{
-    return redirect()->route('admin.copy-trading.pendingCopyRequests', ['tab' => 'rejected']);
-}
-
-////////////////////////////////////////////////////////////
-
-public function copyapprove($id)
-{
-    return DB::transaction(function () use ($id) {
-
-        $copyRequest = CopyTradingRequest::with(['user', 'plan'])
-            ->where('id', $id)
-            ->where('status', 'pending')
-            ->lockForUpdate()
-            ->firstOrFail();
-
-        // Check participation limit
-        $userParticipations = Investment::where('user_id', $copyRequest->user_id)
-            ->where('plan_id', $copyRequest->plan_id)
-            ->where('type', 'copy_trading')
-            ->count(); // ✅ all-time count, not just active
-
-        $planLimit = $copyRequest->plan->max_participations ?? 3;
-
-        if ($planLimit > 0 && $userParticipations >= $planLimit) {
-            return response()->json([
-                'success' => false,
-                'message' => "User has reached the maximum of {$planLimit} participations for this plan."
-            ], 422);
-        }
-
-        $copyRequest->update([
-            'status'       => 'approved',
-            'approved_at'  => now(),
-            'processed_by' => auth()->id(),
+            'rejectedRequests' => CopyTradingRequest::with(['user', 'plan', 'admin', 'processor'])
+                ->where('status', 'rejected')
+                ->latest('rejected_at')
+                ->get(),
         ]);
-
-        // ✅ Read duration_unit directly from plan — no fallback to 'days'
-        $durationUnit  = $copyRequest->plan->duration_unit; // minutes, hours, or days
-        $durationValue = $copyRequest->plan->duration;
-        $interestRate  = $copyRequest->plan->interest_rate;
-
-        // ✅ Correctly calculate end date based on actual unit
-        $endDate = match ($durationUnit) {
-            'minutes' => now()->addMinutes($durationValue),
-            'hours'   => now()->addHours($durationValue),
-            'days'    => now()->addDays($durationValue),
-            default   => now()->addDays($durationValue), // safe fallback
-        };
-
-        $expectedProfit = round(($copyRequest->amount * $interestRate) / 100, 2);
-
-        $investment = Investment::create([
-            'user_id'                => $copyRequest->user_id,
-            'plan_id'                => $copyRequest->plan_id,
-            'type'                   => 'copy_trading',
-            'amount_invested'        => $copyRequest->amount,
-            'expected_profit'        => $expectedProfit,
-            'total_profit'           => 0,
-            'current_value'          => $copyRequest->amount,
-            'profit_loss'            => 0,
-            'status'                 => 'active',
-            'start_date'             => now(),
-            'end_date'               => $endDate,
-            'copy_admin_id'          => $copyRequest->copy_admin_id,
-            'copy_admin_name'        => $copyRequest->copy_admin_name,
-            'copy_server_name'       => $copyRequest->copy_server_name,
-            // ✅ Snapshots use the real unit from the plan
-            'snapshot_duration_unit'  => $durationUnit,
-            'snapshot_duration_value' => $durationValue,
-            'snapshot_interest_rate'  => $interestRate,
-            'snapshot_plan_name'      => $copyRequest->plan->name,
-            'snapshot_min_amount'     => $copyRequest->plan->minimum_amount,
-            'snapshot_max_amount'     => $copyRequest->plan->maximum_amount,
-            'snapshot_features'       => $copyRequest->plan->features,
-            'snapshot_assets_traded'  => $copyRequest->plan->assets_traded,
-        ]);
-
-        $investment->updateValue();
-
-        try {
-            $copyRequest->user->notify(new TransactionNotification(
-                'Copy Trading Approved',
-                "Your copy trade of \${$copyRequest->amount} has been approved!\n" .
-                "Expected Profit: \${$expectedProfit}\n" .
-                "Duration: {$durationValue} {$durationUnit}\n" .
-                "Your investment is now active."
-            ));
-        } catch (\Exception $e) {
-            \Log::error('Notification failed: ' . $e->getMessage());
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Request approved successfully'
-        ]);
-    });
-}
-
-////////////////////////////////////////////////////////////
-
-public function copyreject(Request $request, $id)
-{
-    $request->validate([
-        'rejection_reason' => 'required|string|min:5',
-    ]);
-
-    DB::transaction(function () use ($request, $id) {
-
-        $copyRequest = CopyTradingRequest::with('user')
-            ->where('id', $id)
-            ->where('status', 'pending')
-            ->lockForUpdate()
-            ->firstOrFail();
-
-        if (!$copyRequest) {
-            throw new \Exception('Request not found or already processed.');
-        }
-
-        // Update request status
-        $copyRequest->update([
-            'status' => 'rejected',
-            'rejection_reason' => $request->rejection_reason,
-            'rejected_at' => now(),
-            'processed_by' => auth()->id(),
-        ]);
-
-        // ✅ IMPORTANT: Refund the user's balance
-        $user = $copyRequest->user;
-        $user->available_balance += $copyRequest->amount;
-        $user->save();
-
-        // Send notification
-        try {
-            $user->notify(new TransactionNotification(
-                'Copy Trading Request Rejected',
-                "Your copy trading request of \${$copyRequest->amount} has been rejected.\n" .
-                "Reason: {$request->rejection_reason}\n" .
-                "Your funds have been refunded to your available balance."
-            ));
-        } catch (\Exception $e) {
-            \Log::error('Notification failed: ' . $e->getMessage());
-        }
-    });
-
-    return back()->with('success', 'Copy trading request rejected and funds refunded.');
-}
-
-////////////////////////////////////////////////////////////
-
-public function show($id)
-{
-    $copyRequest = CopyTradingRequest::with(['user', 'plan', 'admin', 'processor'])
-        ->findOrFail($id);
-
-    return view('admin.copytrading.show', compact('copyRequest')); // ✅ FIXED VIEW
-}
-
-////////////////////////////////////////////////////////////
-
-public function dashboard()
-{
-    return view('admin.copy-trading.dashboard', [
-        'stats' => [
-            'pending_count' => CopyTradingRequest::where('status', 'pending')->count(),
-            'approved_today' => CopyTradingRequest::where('status', 'approved')
-                ->whereDate('approved_at', today())
-                ->count(),
-            'total_approved' => CopyTradingRequest::where('status', 'approved')->count(),
-            'total_amount' => CopyTradingRequest::where('status', 'approved')->sum('amount'),
-        ],
-
-        'recentRequests' => CopyTradingRequest::with(['user', 'plan'])
-            ->latest()
-            ->limit(10)
-            ->get()
-    ]);
-}
-
-
-
-
-public function rejectBalanceWithdrawal(Request $request, $id)
-{
-    $request->validate([
-        'admin_note' => 'required|string|max:500',
-    ]);
-
-    $withdrawal = Withdrawal::findOrFail($id);
-
-    if ($withdrawal->status !== 'pending') {
-        return back()->with('error', 'Only pending withdrawals can be rejected.');
     }
 
-    DB::transaction(function () use ($request, $withdrawal) {
-        $user = $withdrawal->user;
-        
-        // REFUND the amount back to user's balance
-        $user->available_balance += $withdrawal->amount;
-        $user->save();
+    ////////////////////////////////////////////////////////////
 
-        // Update withdrawal status
-        $withdrawal->status = 'rejected';
-        $withdrawal->admin_note = $request->admin_note;
-        $withdrawal->save();
+    public function copypending()
+    {
+        return redirect()->route('admin.copy-trading.pendingCopyRequests');
+    }
 
-        // Send notification to user
-        try {
-            $user->notify(new TransactionNotification(
-                'Withdrawal Rejected',
-                'Your withdrawal request of $' . number_format($withdrawal->amount, 2) . 
-                ' has been rejected. Reason: ' . $request->admin_note
-            ));
-        } catch (\Exception $e) {
-            \Log::error('Notification failed: ' . $e->getMessage());
+    public function copyapproved()
+    {
+        return redirect()->route('admin.copy-trading.pendingCopyRequests', ['tab' => 'approved']);
+    }
+
+    public function copyrejected()
+    {
+        return redirect()->route('admin.copy-trading.pendingCopyRequests', ['tab' => 'rejected']);
+    }
+
+    ////////////////////////////////////////////////////////////
+
+    public function copyapprove($id)
+    {
+        return DB::transaction(function () use ($id) {
+
+            $copyRequest = CopyTradingRequest::with(['user', 'plan'])
+                ->where('id', $id)
+                ->where('status', 'pending')
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            // Check participation limit
+            $userParticipations = Investment::where('user_id', $copyRequest->user_id)
+                ->where('plan_id', $copyRequest->plan_id)
+                ->where('type', 'copy_trading')
+                ->count(); // ✅ all-time count, not just active
+
+            $planLimit = $copyRequest->plan->max_participations ?? 3;
+
+            if ($planLimit > 0 && $userParticipations >= $planLimit) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "User has reached the maximum of {$planLimit} participations for this plan."
+                ], 422);
+            }
+
+            $copyRequest->update([
+                'status'       => 'approved',
+                'approved_at'  => now(),
+                'processed_by' => auth()->id(),
+            ]);
+
+            // ✅ Read duration_unit directly from plan — no fallback to 'days'
+            $durationUnit  = $copyRequest->plan->duration_unit; // minutes, hours, or days
+            $durationValue = $copyRequest->plan->duration;
+            $interestRate  = $copyRequest->plan->interest_rate;
+
+            // ✅ Correctly calculate end date based on actual unit
+            $endDate = match ($durationUnit) {
+                'minutes' => now()->addMinutes($durationValue),
+                'hours'   => now()->addHours($durationValue),
+                'days'    => now()->addDays($durationValue),
+                default   => now()->addDays($durationValue), // safe fallback
+            };
+
+            $expectedProfit = round(($copyRequest->amount * $interestRate) / 100, 2);
+
+            $investment = Investment::create([
+                'user_id'                => $copyRequest->user_id,
+                'plan_id'                => $copyRequest->plan_id,
+                'type'                   => 'copy_trading',
+                'amount_invested'        => $copyRequest->amount,
+                'expected_profit'        => $expectedProfit,
+                'total_profit'           => 0,
+                'current_value'          => $copyRequest->amount,
+                'profit_loss'            => 0,
+                'status'                 => 'active',
+                'start_date'             => now(),
+                'end_date'               => $endDate,
+                'copy_admin_id'          => $copyRequest->copy_admin_id,
+                'copy_admin_name'        => $copyRequest->copy_admin_name,
+                'copy_server_name'       => $copyRequest->copy_server_name,
+                // ✅ Snapshots use the real unit from the plan
+                'snapshot_duration_unit'  => $durationUnit,
+                'snapshot_duration_value' => $durationValue,
+                'snapshot_interest_rate'  => $interestRate,
+                'snapshot_plan_name'      => $copyRequest->plan->name,
+                'snapshot_min_amount'     => $copyRequest->plan->minimum_amount,
+                'snapshot_max_amount'     => $copyRequest->plan->maximum_amount,
+                'snapshot_features'       => $copyRequest->plan->features,
+                'snapshot_assets_traded'  => $copyRequest->plan->assets_traded,
+            ]);
+
+            $investment->updateValue();
+
+            try {
+                $copyRequest->user->notify(new TransactionNotification(
+                    'Copy Trading Approved',
+                    "Your copy trade of \${$copyRequest->amount} has been approved!\n" .
+                        "Expected Profit: \${$expectedProfit}\n" .
+                        "Duration: {$durationValue} {$durationUnit}\n" .
+                        "Your investment is now active."
+                ));
+            } catch (\Exception $e) {
+                \Log::error('Notification failed: ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Request approved successfully'
+            ]);
+        });
+    }
+
+    ////////////////////////////////////////////////////////////
+
+    public function copyreject(Request $request, $id)
+    {
+        $request->validate([
+            'rejection_reason' => 'required|string|min:5',
+        ]);
+
+        DB::transaction(function () use ($request, $id) {
+
+            $copyRequest = CopyTradingRequest::with('user')
+                ->where('id', $id)
+                ->where('status', 'pending')
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (!$copyRequest) {
+                throw new \Exception('Request not found or already processed.');
+            }
+
+            // Update request status
+            $copyRequest->update([
+                'status' => 'rejected',
+                'rejection_reason' => $request->rejection_reason,
+                'rejected_at' => now(),
+                'processed_by' => auth()->id(),
+            ]);
+
+            // ✅ IMPORTANT: Refund the user's balance
+            $user = $copyRequest->user;
+            $user->available_balance += $copyRequest->amount;
+            $user->save();
+
+            // Send notification
+            try {
+                $user->notify(new TransactionNotification(
+                    'Copy Trading Request Rejected',
+                    "Your copy trading request of \${$copyRequest->amount} has been rejected.\n" .
+                        "Reason: {$request->rejection_reason}\n" .
+                        "Your funds have been refunded to your available balance."
+                ));
+            } catch (\Exception $e) {
+                \Log::error('Notification failed: ' . $e->getMessage());
+            }
+        });
+
+        return back()->with('success', 'Copy trading request rejected and funds refunded.');
+    }
+
+    ////////////////////////////////////////////////////////////
+
+    public function show($id)
+    {
+        $copyRequest = CopyTradingRequest::with(['user', 'plan', 'admin', 'processor'])
+            ->findOrFail($id);
+
+        return view('admin.copytrading.show', compact('copyRequest')); // ✅ FIXED VIEW
+    }
+
+    ////////////////////////////////////////////////////////////
+
+    public function dashboard()
+    {
+        return view('admin.copy-trading.dashboard', [
+            'stats' => [
+                'pending_count' => CopyTradingRequest::where('status', 'pending')->count(),
+                'approved_today' => CopyTradingRequest::where('status', 'approved')
+                    ->whereDate('approved_at', today())
+                    ->count(),
+                'total_approved' => CopyTradingRequest::where('status', 'approved')->count(),
+                'total_amount' => CopyTradingRequest::where('status', 'approved')->sum('amount'),
+            ],
+
+            'recentRequests' => CopyTradingRequest::with(['user', 'plan'])
+                ->latest()
+                ->limit(10)
+                ->get()
+        ]);
+    }
+
+
+
+
+    public function rejectBalanceWithdrawal(Request $request, $id)
+    {
+        $request->validate([
+            'admin_note' => 'required|string|max:500',
+        ]);
+
+        $withdrawal = Withdrawal::findOrFail($id);
+
+        if ($withdrawal->status !== 'pending') {
+            return back()->with('error', 'Only pending withdrawals can be rejected.');
         }
-    });
 
-    return back()->with('success', 'Withdrawal rejected, amount refunded to user.');
-}
+        DB::transaction(function () use ($request, $withdrawal) {
+            $user = $withdrawal->user;
+
+            // REFUND the amount back to user's balance
+            $user->available_balance += $withdrawal->amount;
+            $user->save();
+
+            // Update withdrawal status
+            $withdrawal->status = 'rejected';
+            $withdrawal->admin_note = $request->admin_note;
+            $withdrawal->save();
+
+            // Send notification to user
+            try {
+                $user->notify(new TransactionNotification(
+                    'Withdrawal Rejected',
+                    'Your withdrawal request of $' . number_format($withdrawal->amount, 2) .
+                        ' has been rejected. Reason: ' . $request->admin_note
+                ));
+            } catch (\Exception $e) {
+                \Log::error('Notification failed: ' . $e->getMessage());
+            }
+        });
+
+        return back()->with('success', 'Withdrawal rejected, amount refunded to user.');
+    }
 
 
 // strategy enrollments
@@ -1360,7 +1361,7 @@ public function rejectBalanceWithdrawal(Request $request, $id)
             ->orderBy('sort_order')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
-        
+
         $stats = [
             'total_strategies' => Strategy::count(),
             'active_strategies' => Strategy::where('is_active', true)->count(),
@@ -1368,10 +1369,10 @@ public function rejectBalanceWithdrawal(Request $request, $id)
             'active_enrollments' => StrategyEnrollment::where('status', 'active')->count(),
             'total_revenue' => StrategyEnrollment::sum('amount_paid'),
         ];
-        
+
         return view('admin.strategies.index', compact('strategies', 'stats'));
     }
-    
+
     /**
      * Show form for creating a new strategy.
      */
@@ -1379,97 +1380,97 @@ public function rejectBalanceWithdrawal(Request $request, $id)
     {
         return view('admin.strategies.create');
     }
-    
+
     /**
      * Store a newly created strategy.
      */
- /**
- * Store a newly created strategy.
- */
-public function strategystore(Request $request)
-{
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'slug' => 'nullable|string|max:255|unique:strategies,slug',
-        'description' => 'required|string',
-        'long_description' => 'nullable|string',
-        'price' => 'required|numeric|min:0',
-        'duration_days' => 'nullable|integer|min:0',
-        'features' => 'nullable|array',
-        'features.*' => 'string',
-        'modules' => 'nullable|array',
-        'modules.*.title' => 'required|string',
-        'modules.*.content' => 'required|string',
-        'modules.*.video_url' => 'nullable|url',
-        'difficulty_level' => 'nullable|in:beginner,intermediate,advanced,expert',
-        'learning_objectives' => 'nullable|array',
-        'learning_objectives.*' => 'string',
-        'prerequisites' => 'nullable|array',
-        'prerequisites.*' => 'string',
-        'instructor_name' => 'nullable|string|max:255',
-        'instructor_bio' => 'nullable|string',
-        'instructor_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-        'cover_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-        'badge_text' => 'nullable|string|max:50',
-        'is_active' => 'nullable|boolean',
-        'is_popular' => 'nullable|boolean',
-        'sort_order' => 'nullable|integer',
-        'estimated_hours' => 'nullable|integer|min:0',
-    ]);
-    
-    // Prepare data array
-    $data = [
-        'name' => $validated['name'],
-        'slug' => $validated['slug'] ?? \Illuminate\Support\Str::slug($validated['name']),
-        'description' => $validated['description'],
-        'long_description' => $validated['long_description'] ?? null,
-        'price' => $validated['price'],
-        'duration_days' => $validated['duration_days'] ?? null,
-        'difficulty_level' => $validated['difficulty_level'] ?? null,
-        'instructor_name' => $validated['instructor_name'] ?? null,
-        'instructor_bio' => $validated['instructor_bio'] ?? null,
-        'badge_text' => $validated['badge_text'] ?? null,
-        'is_active' => $request->has('is_active'),
-        'is_popular' => $request->has('is_popular'),
-        'sort_order' => $validated['sort_order'] ?? 0,
-        'estimated_hours' => $validated['estimated_hours'] ?? null,
-    ];
-    
-    // Handle JSON fields - convert arrays to JSON
-    if (isset($validated['features']) && is_array($validated['features'])) {
-        $data['features'] = json_encode(array_values(array_filter($validated['features'])));
+    /**
+     * Store a newly created strategy.
+     */
+    public function strategystore(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:strategies,slug',
+            'description' => 'required|string',
+            'long_description' => 'nullable|string',
+            'price' => 'required|numeric|min:0',
+            'duration_days' => 'nullable|integer|min:0',
+            'features' => 'nullable|array',
+            'features.*' => 'string',
+            'modules' => 'nullable|array',
+            'modules.*.title' => 'required|string',
+            'modules.*.content' => 'required|string',
+            'modules.*.video_url' => 'nullable|url',
+            'difficulty_level' => 'nullable|in:beginner,intermediate,advanced,expert',
+            'learning_objectives' => 'nullable|array',
+            'learning_objectives.*' => 'string',
+            'prerequisites' => 'nullable|array',
+            'prerequisites.*' => 'string',
+            'instructor_name' => 'nullable|string|max:255',
+            'instructor_bio' => 'nullable|string',
+            'instructor_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'cover_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'badge_text' => 'nullable|string|max:50',
+            'is_active' => 'nullable|boolean',
+            'is_popular' => 'nullable|boolean',
+            'sort_order' => 'nullable|integer',
+            'estimated_hours' => 'nullable|integer|min:0',
+        ]);
+
+        // Prepare data array
+        $data = [
+            'name' => $validated['name'],
+            'slug' => $validated['slug'] ?? \Illuminate\Support\Str::slug($validated['name']),
+            'description' => $validated['description'],
+            'long_description' => $validated['long_description'] ?? null,
+            'price' => $validated['price'],
+            'duration_days' => $validated['duration_days'] ?? null,
+            'difficulty_level' => $validated['difficulty_level'] ?? null,
+            'instructor_name' => $validated['instructor_name'] ?? null,
+            'instructor_bio' => $validated['instructor_bio'] ?? null,
+            'badge_text' => $validated['badge_text'] ?? null,
+            'is_active' => $request->has('is_active'),
+            'is_popular' => $request->has('is_popular'),
+            'sort_order' => $validated['sort_order'] ?? 0,
+            'estimated_hours' => $validated['estimated_hours'] ?? null,
+        ];
+
+        // Handle JSON fields - convert arrays to JSON
+        if (isset($validated['features']) && is_array($validated['features'])) {
+            $data['features'] = json_encode(array_values(array_filter($validated['features'])));
+        }
+
+        if (isset($validated['modules']) && is_array($validated['modules'])) {
+            $data['modules'] = json_encode(array_values($validated['modules']));
+        }
+
+        if (isset($validated['learning_objectives']) && is_array($validated['learning_objectives'])) {
+            $data['learning_objectives'] = json_encode(array_values(array_filter($validated['learning_objectives'])));
+        }
+
+        if (isset($validated['prerequisites']) && is_array($validated['prerequisites'])) {
+            $data['prerequisites'] = json_encode(array_values(array_filter($validated['prerequisites'])));
+        }
+
+        // Handle instructor image upload
+        if ($request->hasFile('instructor_image')) {
+            $path = $request->file('instructor_image')->store('strategies/instructors', 'public');
+            $data['instructor_image'] = $path;
+        }
+
+        // Handle cover image upload
+        if ($request->hasFile('cover_image')) {
+            $path = $request->file('cover_image')->store('strategies/covers', 'public');
+            $data['cover_image'] = $path;
+        }
+
+        Strategy::create($data);
+
+        return redirect()->route('admin.strategies.strategyindex')
+            ->with('success', 'Course created successfully.');
     }
-    
-    if (isset($validated['modules']) && is_array($validated['modules'])) {
-        $data['modules'] = json_encode(array_values($validated['modules']));
-    }
-    
-    if (isset($validated['learning_objectives']) && is_array($validated['learning_objectives'])) {
-        $data['learning_objectives'] = json_encode(array_values(array_filter($validated['learning_objectives'])));
-    }
-    
-    if (isset($validated['prerequisites']) && is_array($validated['prerequisites'])) {
-        $data['prerequisites'] = json_encode(array_values(array_filter($validated['prerequisites'])));
-    }
-    
-    // Handle instructor image upload
-    if ($request->hasFile('instructor_image')) {
-        $path = $request->file('instructor_image')->store('strategies/instructors', 'public');
-        $data['instructor_image'] = $path;
-    }
-    
-    // Handle cover image upload
-    if ($request->hasFile('cover_image')) {
-        $path = $request->file('cover_image')->store('strategies/covers', 'public');
-        $data['cover_image'] = $path;
-    }
-    
-    Strategy::create($data);
-    
-    return redirect()->route('admin.strategies.strategyindex')
-        ->with('success', 'Course created successfully.');
-}
-    
+
     /**
      * Show form for editing a strategy.
      */
@@ -1478,14 +1479,14 @@ public function strategystore(Request $request)
         $strategy = Strategy::findOrFail($id);
         return view('admin.strategies.edit', compact('strategy'));
     }
-    
+
     /**
      * Update the specified strategy.
      */
     public function strategyupdate(Request $request, $id)
     {
         $strategy = Strategy::findOrFail($id);
-        
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:strategies,slug,' . $id,
@@ -1514,69 +1515,127 @@ public function strategystore(Request $request)
             'sort_order' => 'nullable|integer',
             'estimated_hours' => 'nullable|integer|min:0',
         ]);
-        
-        $data = $validated;
-        $data['is_active'] = $request->has('is_active');
-        $data['is_popular'] = $request->has('is_popular');
-        
+
+        $data = [
+            'name' => $validated['name'],
+            'slug' => $validated['slug'] ?? \Illuminate\Support\Str::slug($validated['name']),
+            'description' => $validated['description'],
+            'long_description' => $validated['long_description'] ?? null,
+            'price' => $validated['price'],
+            'duration_days' => $validated['duration_days'] ?? null,
+            'difficulty_level' => $validated['difficulty_level'] ?? null,
+            'instructor_name' => $validated['instructor_name'] ?? null,
+            'instructor_bio' => $validated['instructor_bio'] ?? null,
+            'badge_text' => $validated['badge_text'] ?? null,
+            'sort_order' => $validated['sort_order'] ?? 0,
+            'estimated_hours' => $validated['estimated_hours'] ?? null,
+
+            'is_active' => $request->has('is_active'),
+            'is_popular' => $request->has('is_popular'),
+        ];
+
+        // Convert arrays to JSON
+        $data['features'] = isset($validated['features'])
+            ? json_encode(array_values(array_filter($validated['features'])))
+            : null;
+
+        $data['learning_objectives'] = isset($validated['learning_objectives'])
+            ? json_encode(array_values(array_filter($validated['learning_objectives'])))
+            : null;
+
+        $data['prerequisites'] = isset($validated['prerequisites'])
+            ? json_encode(array_values(array_filter($validated['prerequisites'])))
+            : null;
+
+        $data['modules'] = isset($validated['modules'])
+            ? json_encode(array_values($validated['modules']))
+            : null;
+
         if ($request->hasFile('instructor_image')) {
-            $path = $request->file('instructor_image')->store('strategies/instructors', 'public');
+
+            // delete old image
+            if (
+                $strategy->instructor_image &&
+                \Illuminate\Support\Facades\Storage::disk('public')->exists($strategy->instructor_image)
+            ) {
+
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($strategy->instructor_image);
+            }
+
+            $path = $request->file('instructor_image')
+                ->store('strategies/instructors', 'public');
+
             $data['instructor_image'] = $path;
         }
-        
+
         if ($request->hasFile('cover_image')) {
-            $path = $request->file('cover_image')->store('strategies/covers', 'public');
+
+            // delete old image
+            if (
+                $strategy->cover_image &&
+                \Illuminate\Support\Facades\Storage::disk('public')->exists($strategy->cover_image)
+            ) {
+
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($strategy->cover_image);
+            }
+
+            $path = $request->file('cover_image')
+                ->store('strategies/covers', 'public');
+
             $data['cover_image'] = $path;
         }
-        
+
+
+
+
+
         $strategy->update($data);
-        
+
         return redirect()->route('admin.strategies.strategyindex')
             ->with('success', 'Strategy updated successfully.');
     }
-    
+
     /**
      * Delete a strategy.
      */
-/**
- * Delete a strategy.
- */
-public function strategydestroy($id)
-{
-    $strategy = Strategy::findOrFail($id);
+    /**
+     * Delete a strategy.
+     */
+    public function strategydestroy($id)
+    {
+        $strategy = Strategy::findOrFail($id);
 
-    // delete related enrollments
-    $strategy->enrollments()->delete();
+        // delete related enrollments
+        $strategy->enrollments()->delete();
 
-    // delete cover image
-    if ($strategy->cover_image && Storage::disk('public')->exists($strategy->cover_image)) {
-        Storage::disk('public')->delete($strategy->cover_image);
+        // delete cover image
+        if ($strategy->cover_image && Storage::disk('public')->exists($strategy->cover_image)) {
+            Storage::disk('public')->delete($strategy->cover_image);
+        }
+
+        // delete instructor image
+        if ($strategy->instructor_image && Storage::disk('public')->exists($strategy->instructor_image)) {
+            Storage::disk('public')->delete($strategy->instructor_image);
+        }
+
+        // delete strategy
+        $strategy->delete();
+
+        return redirect()->route('admin.strategies.strategyindex')
+            ->with('success', 'Strategy deleted successfully.');
     }
-
-    // delete instructor image
-    if ($strategy->instructor_image && Storage::disk('public')->exists($strategy->instructor_image)) {
-        Storage::disk('public')->delete($strategy->instructor_image);
-    }
-
-    // delete strategy
-    $strategy->delete();
-
-    return redirect()->route('admin.strategies.strategyindex')
-        ->with('success', 'Strategy deleted successfully.');
-} 
     /**
      * Display enrollments for a specific strategy.
      */
     public function strategyenrollments($id)
     {
         $strategy = Strategy::with(['enrollments.user'])->findOrFail($id);
-        
+
         $enrollments = $strategy->enrollments()
             ->with('user')
             ->orderBy('created_at', 'desc')
             ->paginate(20);
-        
+
         return view('admin.strategies.enrollments', compact('strategy', 'enrollments'));
     }
-
 }

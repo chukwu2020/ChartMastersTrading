@@ -155,24 +155,31 @@
         }
     }
 
-    .mod-card-head {
-        background: linear-gradient(135deg, #0C3A30, #0d4535);
-        padding: 1.5rem 1.75rem;
-        position: relative;
-        overflow: hidden;
-    }
+ .mod-card-head {
+    background: linear-gradient(135deg, #0C3A30, #0d4535);
+    padding: 1.5rem 1.75rem;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
 
-    .mod-card-head::after {
-        content: '';
-        position: absolute;
-        top: -40%;
-        right: -10%;
-        width: 40%;
-        height: 180%;
-        background: rgba(158, 221, 5, 0.05);
-        transform: rotate(20deg);
-    }
+.mod-card-head::after {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -10%;
+    width: 40%;
+    height: 180%;
+    background: rgba(158, 221, 5, 0.05);
+    transform: rotate(20deg);
+    z-index: 0;
+    pointer-events: none;
+}
 
+.mod-card-head > * {
+    position: relative;
+    z-index: 2;
+}
     .mod-card-head h1 {
         color: #ffffff !important;
         font-size: 1.35rem;
@@ -591,7 +598,9 @@
                     <span style="color:#fff!important;" id="pct-label">{{ $enrollment->progress }}%</span>
                 </div>
                 <div class="sb-pbar">
-                    <div class="sb-pfill" style="color:#fff!important;" id="sidebar-bar" style="width:{{ $enrollment->progress }}%;"></div>
+                    
+                    <div class="sb-pfill" id="sidebar-bar" style="width:{{ $enrollment->progress }}%;"></div>
+                   
                 </div>
                 <p class="text-xs mt-1.5" style="color:#fff !important;;">
                     <span style="color:#fff !important;" id="done-count">0</span> / {{ $total }} modules complete
@@ -622,7 +631,8 @@
             @endphp
             <div class="mod-card" id="mod-{{ $i }}" style="{{ $i>0?'display:none;':'' }}">
                 <div class="mod-card-head">
-                    <div class="relative z-10">
+           
+                        <div>
                         <div class="flex items-center gap-2 mb-2">
                             <span style="padding:3px 10px;background:rgba(158,221,5,0.15);border:1px solid rgba(158,221,5,0.3);border-radius:30px;font-size:0.7rem;font-weight:700;color:#9EDD05 !important;">
                                 Module {{ $i+1 }} of {{ $total }}
@@ -637,24 +647,26 @@
                 <div class="mod-body">
 
                     {{-- ── About This Course (long_description) — shown on the FIRST module only, collapsed on others ── --}}
-                    @if($i === 0 && $strategy->long_description)
+                   @if($strategy->long_description)
                     <div class="about-course-panel">
                         <h3>
                             <iconify-icon style="color:#9EDD05 !important;" icon="ph:info-fill"></iconify-icon>
                             About This Course
                         </h3>
-                        <div class="prose-text" id="aboutText">
+                       
+                            <div class="prose-text" id="aboutText-{{ $i }}">
                             {!! nl2br(e(Str::limit($strategy->long_description, 400))) !!}
                         </div>
                         @if(strlen($strategy->long_description) > 400)
-                        <div id="aboutFull" style="display:none;">
+                        <div id="aboutFull-{{ $i }}" style="display:none;">
                             <div class="prose-text">{!! nl2br(e($strategy->long_description)) !!}</div>
                         </div>
-                        <button onclick="toggleAbout()" id="aboutToggleBtn"
+                       
+                        <button onclick="toggleAbout({{ $i }})"
                             class="mt-3 text-xs font-bold flex items-center gap-1"
                             style="color:var(--dg);background:none;border:none;cursor:pointer;padding:0;">
-                            <iconify-icon id="aboutToggleIcon" icon="ph:caret-down-bold"></iconify-icon>
-                            <span id="aboutToggleTxt">Read more</span>
+                          <iconify-icon id="aboutToggleIcon-{{ $i }}"icon="ph:caret-down-bold"></iconify-icon>
+                         <span id="aboutToggleTxt-{{ $i }}">Read more</span>
                         </button>
                         @endif
                     </div>
@@ -1043,30 +1055,29 @@ function showToast(msg, type = 'success') {
 /* ─────────────────────────────
    ABOUT TOGGLE
 ───────────────────────────── */
-let aboutExpanded = false;
+const aboutExpanded = {};
 
-function toggleAbout() {
+function toggleAbout(index) {
 
-    aboutExpanded = !aboutExpanded;
+    aboutExpanded[index] = !aboutExpanded[index];
 
-    document.getElementById('aboutText').style.display =
-        aboutExpanded ? 'none' : 'block';
+    document.getElementById('aboutText-' + index).style.display =
+        aboutExpanded[index] ? 'none' : 'block';
 
-    document.getElementById('aboutFull').style.display =
-        aboutExpanded ? 'block' : 'none';
+    document.getElementById('aboutFull-' + index).style.display =
+        aboutExpanded[index] ? 'block' : 'none';
 
-    document.getElementById('aboutToggleTxt').textContent =
-        aboutExpanded ? 'Show less' : 'Read more';
+    document.getElementById('aboutToggleTxt-' + index).textContent =
+        aboutExpanded[index] ? 'Show less' : 'Read more';
 
-    document.getElementById('aboutToggleIcon')
+    document.getElementById('aboutToggleIcon-' + index)
         .setAttribute(
             'icon',
-            aboutExpanded
+            aboutExpanded[index]
                 ? 'ph:caret-up-bold'
                 : 'ph:caret-down-bold'
         );
 }
-
 /* ─────────────────────────────
    INIT
 ───────────────────────────── */

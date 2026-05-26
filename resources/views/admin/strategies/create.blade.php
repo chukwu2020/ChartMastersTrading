@@ -129,6 +129,7 @@
                     <select name="difficulty_level" class="form-select">
                         <option value="">Select Difficulty</option>
                         <option value="beginner">Beginner</option>
+                         <option value="beginner">Beginner To Intermediate</option>
                         <option value="intermediate">Intermediate</option>
                         <option value="advanced">Advanced</option>
                         <option value="expert">Expert</option>

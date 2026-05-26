@@ -204,11 +204,268 @@
                 <textarea name="instructor_bio" rows="4" class="form-textarea">{{ old('instructor_bio', $strategy->instructor_bio) }}</textarea>
             </div>
         </div>
+<!-- Features -->
+<div class="form-card">
+    <h3 class="text-lg font-bold mb-4" style="color: var(--dark-green);">Course Features</h3>
 
+    <div id="features-container">
+        @php
+            $features = is_array($strategy->features)
+                ? $strategy->features
+                : json_decode($strategy->features, true);
+        @endphp
+
+        @forelse($features ?? [] as $feature)
+        <div class="feature-item flex items-center gap-2">
+            <input type="text" name="features[]" class="form-input flex-1"
+                value="{{ $feature }}">
+            <button type="button" class="remove-feature text-red-500">Remove</button>
+        </div>
+        @empty
+        <div class="feature-item flex items-center gap-2">
+            <input type="text" name="features[]" class="form-input flex-1">
+            <button type="button" class="remove-feature text-red-500">Remove</button>
+        </div>
+        @endforelse
+    </div>
+
+    <button type="button" id="add-feature" class="add-btn">+ Add Feature</button>
+</div>
+
+<!-- Learning Objectives -->
+<div class="form-card">
+    <h3 class="text-lg font-bold mb-4" style="color: var(--dark-green);">Learning Objectives</h3>
+
+    <div id="objectives-container">
+        @php
+            $objectives = is_array($strategy->learning_objectives)
+                ? $strategy->learning_objectives
+                : json_decode($strategy->learning_objectives, true);
+        @endphp
+
+        @forelse($objectives ?? [] as $objective)
+        <div class="feature-item flex items-center gap-2">
+            <input type="text" name="learning_objectives[]" class="form-input flex-1"
+                value="{{ $objective }}">
+            <button type="button" class="remove-objective text-red-500">Remove</button>
+        </div>
+        @empty
+        <div class="feature-item flex items-center gap-2">
+            <input type="text" name="learning_objectives[]" class="form-input flex-1">
+            <button type="button" class="remove-objective text-red-500">Remove</button>
+        </div>
+        @endforelse
+    </div>
+
+    <button type="button" id="add-objective" class="add-btn">+ Add Learning Objective</button>
+</div>
+
+<!-- Prerequisites -->
+<div class="form-card">
+    <h3 class="text-lg font-bold mb-4" style="color: var(--dark-green);">Prerequisites</h3>
+
+    <div id="prerequisites-container">
+        @php
+            $prerequisites = is_array($strategy->prerequisites)
+                ? $strategy->prerequisites
+                : json_decode($strategy->prerequisites, true);
+        @endphp
+
+        @forelse($prerequisites ?? [] as $prerequisite)
+        <div class="feature-item flex items-center gap-2">
+            <input type="text" name="prerequisites[]" class="form-input flex-1"
+                value="{{ $prerequisite }}">
+            <button type="button" class="remove-prerequisite text-red-500">Remove</button>
+        </div>
+        @empty
+        <div class="feature-item flex items-center gap-2">
+            <input type="text" name="prerequisites[]" class="form-input flex-1">
+            <button type="button" class="remove-prerequisite text-red-500">Remove</button>
+        </div>
+        @endforelse
+    </div>
+
+    <button type="button" id="add-prerequisite" class="add-btn">+ Add Prerequisite</button>
+</div>
+
+<!-- Modules -->
+<div class="form-card">
+    <h3 class="text-lg font-bold mb-4" style="color: var(--dark-green);">Course Modules</h3>
+
+    <div id="modules-container">
+
+        @php
+            $modules = is_array($strategy->modules)
+                ? $strategy->modules
+                : json_decode($strategy->modules, true);
+        @endphp
+
+        @forelse($modules ?? [] as $index => $module)
+        <div class="module-item">
+            <div class="mb-2">
+                <label class="form-label text-sm">Module Title</label>
+                <input type="text"
+                    name="modules[{{ $index }}][title]"
+                    class="form-input"
+                    value="{{ $module['title'] ?? '' }}">
+            </div>
+
+            <div class="mb-2">
+                <label class="form-label text-sm">Module Content</label>
+                <textarea
+                    name="modules[{{ $index }}][content]"
+                    rows="3"
+                    class="form-textarea">{{ $module['content'] ?? '' }}</textarea>
+            </div>
+
+            <div>
+                <label class="form-label text-sm">Video URL</label>
+                <input type="url"
+                    name="modules[{{ $index }}][video_url]"
+                    class="form-input"
+                    value="{{ $module['video_url'] ?? '' }}">
+            </div>
+
+            <button type="button" class="remove-module text-red-500 text-sm mt-2">
+                Remove Module
+            </button>
+        </div>
+        @empty
+        <div class="module-item">
+            <div class="mb-2">
+                <label class="form-label text-sm">Module Title</label>
+                <input type="text" name="modules[0][title]" class="form-input">
+            </div>
+
+            <div class="mb-2">
+                <label class="form-label text-sm">Module Content</label>
+                <textarea name="modules[0][content]" rows="3" class="form-textarea"></textarea>
+            </div>
+
+            <div>
+                <label class="form-label text-sm">Video URL</label>
+                <input type="url" name="modules[0][video_url]" class="form-input">
+            </div>
+
+            <button type="button" class="remove-module text-red-500 text-sm mt-2">
+                Remove Module
+            </button>
+        </div>
+        @endforelse
+
+    </div>
+
+    <button type="button" id="add-module" class="add-btn">+ Add Module</button>
+</div>
         <div class="flex justify-end gap-3">
             <a href="{{ route('admin.strategies.strategyindex') }}" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</a>
             <button type="submit" class="btn-submit">Update Course</button>
         </div>
     </form>
 </div>
+
+<script>
+    let moduleCount = document.querySelectorAll('.module-item').length;
+
+    function attachRemoveEvent(btn, element) {
+        btn?.addEventListener('click', function () {
+            element.remove();
+        });
+    }
+
+    // Add Feature
+    document.getElementById('add-feature')?.addEventListener('click', function () {
+        const div = document.createElement('div');
+        div.className = 'feature-item flex items-center gap-2';
+        div.innerHTML = `
+            <input type="text" name="features[]" class="form-input flex-1">
+            <button type="button" class="remove-feature text-red-500">Remove</button>
+        `;
+        document.getElementById('features-container').appendChild(div);
+        attachRemoveEvent(div.querySelector('.remove-feature'), div);
+    });
+
+    // Add Objective
+    document.getElementById('add-objective')?.addEventListener('click', function () {
+        const div = document.createElement('div');
+        div.className = 'feature-item flex items-center gap-2';
+        div.innerHTML = `
+            <input type="text" name="learning_objectives[]" class="form-input flex-1">
+            <button type="button" class="remove-objective text-red-500">Remove</button>
+        `;
+        document.getElementById('objectives-container').appendChild(div);
+        attachRemoveEvent(div.querySelector('.remove-objective'), div);
+    });
+
+    // Add Prerequisite
+    document.getElementById('add-prerequisite')?.addEventListener('click', function () {
+        const div = document.createElement('div');
+        div.className = 'feature-item flex items-center gap-2';
+        div.innerHTML = `
+            <input type="text" name="prerequisites[]" class="form-input flex-1">
+            <button type="button" class="remove-prerequisite text-red-500">Remove</button>
+        `;
+        document.getElementById('prerequisites-container').appendChild(div);
+        attachRemoveEvent(div.querySelector('.remove-prerequisite'), div);
+    });
+
+    // Add Module
+    document.getElementById('add-module')?.addEventListener('click', function () {
+
+        const div = document.createElement('div');
+        div.className = 'module-item';
+
+        div.innerHTML = `
+            <div class="mb-2">
+                <label class="form-label text-sm">Module Title</label>
+                <input type="text" name="modules[${moduleCount}][title]" class="form-input">
+            </div>
+
+            <div class="mb-2">
+                <label class="form-label text-sm">Module Content</label>
+                <textarea name="modules[${moduleCount}][content]" rows="3" class="form-textarea"></textarea>
+            </div>
+
+            <div>
+                <label class="form-label text-sm">Video URL</label>
+                <input type="url" name="modules[${moduleCount}][video_url]" class="form-input">
+            </div>
+
+            <button type="button" class="remove-module text-red-500 text-sm mt-2">
+                Remove Module
+            </button>
+        `;
+
+        document.getElementById('modules-container').appendChild(div);
+
+        attachRemoveEvent(div.querySelector('.remove-module'), div);
+
+        moduleCount++;
+    });
+
+    // Existing remove buttons
+    document.querySelectorAll('.remove-feature').forEach(btn => {
+        btn.addEventListener('click', function () {
+            this.parentElement.remove();
+        });
+    });
+
+    document.querySelectorAll('.remove-objective').forEach(btn => {
+        btn.addEventListener('click', function () {
+            this.parentElement.remove();
+        });
+    });
+
+    document.querySelectorAll('.remove-prerequisite').forEach(btn => {
+        btn.addEventListener('click', function () {
+            this.parentElement.remove();
+        });
+    });
+
+    document.querySelectorAll('.remove-module').forEach(btn => {
+        btn.addEventListener('click', function () {
+            this.parentElement.remove();
+        });
+    });
+</script>
 @endsection
