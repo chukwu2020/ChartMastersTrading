@@ -16,13 +16,16 @@
     }
 
     /* ── Grid layout ── */
-    .learn-grid {
-        display: grid;
-        grid-template-columns: 280px 1fr;
-        gap: 1.5rem;
-        align-items: start;
-    }
-
+  .learn-grid {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+.l-main {
+    min-width: 0;
+    overflow: hidden;
+}
     @media(max-width:1024px) {
         .learn-grid {
             grid-template-columns: 1fr;
@@ -35,8 +38,10 @@
         border: 1.5px solid #e5e7eb;
         border-radius: 1.25rem;
         overflow: hidden;
-        position: sticky;
-        top: 1.25rem;
+       
+         position: sticky;
+    top: 1.25rem;
+    z-index: 2;
         max-height: calc(100vh - 2.5rem);
         overflow-y: auto;
     }
@@ -203,7 +208,11 @@
         border-radius: 1rem;
         padding: 1.5rem;
         margin-bottom: 1.75rem;
-        z-index: 2;
+        position: relative;
+    width: 100%;
+    display: block;
+    margin-bottom: 1.75rem;
+    overflow-wrap: break-word;
     }
 
     .about-course-panel h3 {
@@ -649,7 +658,7 @@
 
                     {{-- ── About This Course (long_description) — shown on the FIRST module only, collapsed on others ── --}}
                    @if($strategy->long_description)
-                    <div class="about-course-panel">
+                    <div class="about-course-panel" >
                         <h3>
                             <iconify-icon style="color:#9EDD05 !important;" icon="ph:info-fill"></iconify-icon>
                             About This Course
