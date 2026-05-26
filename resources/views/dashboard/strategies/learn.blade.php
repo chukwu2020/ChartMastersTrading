@@ -203,6 +203,7 @@
         border-radius: 1rem;
         padding: 1.5rem;
         margin-bottom: 1.75rem;
+        z-index: 2;
     }
 
     .about-course-panel h3 {
