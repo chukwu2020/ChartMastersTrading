@@ -740,40 +740,39 @@
                         <p class="card-desc mb-3">
                             {{ Str::limit($strat->description,80) }}
                         </p>
+{{-- Features --}}
+@php
+$features = [];
 
-                        {{-- Features --}}
-                        @php
-                        $features = [];
+if($strat->features ?? null){
+    $features = is_array($strat->features)
+    ? $strat->features
+    : (json_decode($strat->features,true) ?? []);
+}
+@endphp
 
-                        if($strat->features ?? null){
-                        $features = is_array($strat->features)
-                        ? $strat->features
-                        : (json_decode($strat->features,true) ?? []);
-                        }
-                        @endphp
+@if(count($features))
 
-                        @if(count($features))
+<div class="course-features">
 
-                        <div class="course-features">
+    @foreach($features as $feature)
 
-                            @foreach(array_slice($features,0,4) as $feature)
+    <div class="feature-pill">
 
-                            <div class="feature-pill">
+        <iconify-icon
+            icon="ph:check-circle-fill"
+            style="color:#8AC304 !important;">
+        </iconify-icon>
 
-                                <iconify-icon
-                                    icon="ph:check-circle-fill"
-                                    style="color:#8AC304 !important;">
-                                </iconify-icon>
+        <span>{{ $feature }}</span>
 
-                                <span>{{ $feature }}</span>
+    </div>
 
-                            </div>
+    @endforeach
 
-                            @endforeach
+</div>
 
-                        </div>
-
-                        @endif
+@endif
 
                     </div>
 
