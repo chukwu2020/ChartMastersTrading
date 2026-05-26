@@ -127,7 +127,7 @@
         background: white;
         border: 2px solid #e5e7eb;
         border-radius: 20px;
-        padding: 1.5rem;
+        padding: 1rem;
         transition: all 0.3s ease;
         position: relative;
     }
@@ -569,10 +569,7 @@
                 @endphp
 
                 <div class="invest-card completed-ready">
-                    <div class="ready-badge">
-                        <iconify-icon icon="ph:check-circle-fill" class="inline"></iconify-icon>
-                        READY
-                    </div>
+                    
 
                     <div class="flex justify-between items-start mb-3">
                         <div>
@@ -581,21 +578,21 @@
                             <div class="flex flex-wrap gap-2 mt-1">
                                 @if($plan->trading_style)
                                 <span class="trading-style-tag" style="background: rgba(158, 221, 5, 0.15); color: var(--dark-green);">
-                                    <iconify-icon icon="ph:chart-line-up-fill"></iconify-icon>
+                                    <iconify-icon style="color:#9EDD05 !important;" icon="ph:chart-line-up-fill"></iconify-icon>
                                     {{ $plan->trading_style }}
                                 </span>
                                 @endif
                                 @if($plan->risk_level)
                                 <span class="trading-style-tag" style="background: rgba(158, 221, 5, 0.1); color: var(--dark-green);">
-                                    <iconify-icon icon="ph:shield-check-fill"></iconify-icon>
+                                    <iconify-icon style="color:#9EDD05 !important;" icon="ph:shield-check-fill"></iconify-icon>
                                     {{ $plan->risk_level }} Risk
                                 </span>
                                 @endif
                             </div>
                             @endif
                         </div>
-                        <span class="px-2 py-1 text-xs font-medium rounded-full" style="background: rgba(158, 221, 5, 0.2); color: var(--dark-green);">
-                            <iconify-icon icon="ph:check-circle-fill" class="inline"></iconify-icon> Completed
+                        <span class="px-3 py-1 text-xs font-medium rounded-full" style=" display:flex; flex-wrap:no-wrap !important; background: rgba(158, 221, 5, 0.2); color: var(--dark-green);">
+                            <iconify-icon icon="ph:check-circle-fill" style="color:#9EDD05 !important;" class="inline"></iconify-icon> Completed
                         </span>
                     </div>
 
