@@ -31,7 +31,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-
+use Illuminate\Support\Facades\Storage;
 class AdminController extends Controller
 {
     public function userIndex(Request $request)
@@ -1538,21 +1538,32 @@ public function strategystore(Request $request)
     /**
      * Delete a strategy.
      */
-    public function strategydestroy($id)
-    {
-        $strategy = Strategy::findOrFail($id);
-        
-        // Check if there are enrollments
-        if ($strategy->enrollments()->count() > 0) {
-            return back()->with('error', 'Cannot delete strategy with active enrollments.');
-        }
-        
-        $strategy->delete();
-        
-        return redirect()->route('admin.strategies.strategyindex')
-            ->with('success', 'Strategy deleted successfully.');
+/**
+ * Delete a strategy.
+ */
+public function strategydestroy($id)
+{
+    $strategy = Strategy::findOrFail($id);
+
+    // delete related enrollments
+    $strategy->enrollments()->delete();
+
+    // delete cover image
+    if ($strategy->cover_image && Storage::disk('public')->exists($strategy->cover_image)) {
+        Storage::disk('public')->delete($strategy->cover_image);
     }
-    
+
+    // delete instructor image
+    if ($strategy->instructor_image && Storage::disk('public')->exists($strategy->instructor_image)) {
+        Storage::disk('public')->delete($strategy->instructor_image);
+    }
+
+    // delete strategy
+    $strategy->delete();
+
+    return redirect()->route('admin.strategies.strategyindex')
+        ->with('success', 'Strategy deleted successfully.');
+} 
     /**
      * Display enrollments for a specific strategy.
      */

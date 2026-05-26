@@ -118,7 +118,7 @@
         flex-shrink: 0;
     }
 
-    /* Admin Selection Styles - Copied exactly from registration form */
+    /* Admin Selection Styles */
     .admin-select-wrapper {
         background: white;
         border-radius: 12px;
@@ -336,7 +336,6 @@
         outline: none;
     }
 
-    /* Add to your existing styles */
     .win-rate-badge {
         display: inline-flex;
         align-items: center;
@@ -425,6 +424,20 @@
         content: none !important;
         display: none !important;
     }
+
+    /* Corporate account specific styles */
+    .corporate-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .corporate-header .badge {
+        background: #8bc905;
+        color: #0C3A30;
+        font-size: 14px;
+        padding: 8px 20px;
+        border-radius: 50px;
+    }
 </style>
 
 <!-- Page Header -->
@@ -471,6 +484,9 @@
 
                 <form id="additionalInfoForm" action="{{ route('user.additional.info.save') }}" method="POST">
                     @csrf
+
+                    <!-- Hidden account type - always corporate -->
+                    <input type="hidden" name="account_type" value="corporate">
 
                     <!-- Trading Experience -->
                     <div class="form-section" data-aos="fade-up">
@@ -521,7 +537,7 @@
                                         <div>
                                             <strong>Beginner</strong>
                                             <p class="small text-muted mb-0">
-                                                I’m new to investing, but I’m ready to learn I’ll need guidance to get started.
+                                                I'm new to investing, but I'm ready to learn I'll need guidance to get started.
                                             </p>
                                         </div>
                                     </div>
@@ -530,7 +546,7 @@
                             </div>
 
                             <small class="text-success d-block mt-2">
-                                ✔ Don’t worry — we provide expert guidance, tools, and support tailored to your experience level.
+                                ✔ Don't worry — we provide expert guidance, tools, and support tailored to your experience level.
                             </small>
 
                             @error('stock_experience')
@@ -634,37 +650,16 @@
                         @error('asset_classes') <span class="text-danger small">{{ $message }}</span> @enderror
                     </div>
 
-                    <!-- Account Type Selection -->
+                    <!-- Corporate Account Section - Admin Selection -->
                     <div class="form-section" data-aos="fade-up" data-aos-delay="300">
-                        <h3>What account would you like to open?</h3>
-                        <p class="section-desc">Choose the account type that matches your needs</p>
-
-                        <div class="row g-4">
-                            <!-- Platform Account Option -->
-                            <div class="col-md-6">
-                                <div class="option-card {{ old('account_type') == 'personal' ? 'selected' : '' }}" onclick="selectAccountType('personal')">
-                                    <input type="radio" name="account_type" id="account_personal" value="personal" class="form-check-input" {{ old('account_type') == 'personal' ? 'checked' : '' }} required>
-                                    <div>
-                                        <h5 class="fw-bold mb-2">Platform Account</h5>
-                                        <p class="small text-muted mb-0">A flexible trading/investing account to help you build long-term wealth.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Corporate Account Option -->
-                            <div class="col-md-6">
-                                <div class="option-card {{ old('account_type') == 'corporate' ? 'selected' : '' }}" onclick="selectAccountType('corporate')">
-                                    <input type="radio" name="account_type" id="account_corporate" value="corporate" class="form-check-input" {{ old('account_type') == 'corporate' ? 'checked' : '' }}>
-                                    <div>
-                                        <h5 class="fw-bold mb-2">Corporate Account <span class="badge ms-2" style="background: #8bc905; color: #0C3A30;">With Expert Traders</span></h5>
-                                        <p class="small text-muted mb-0">For expert traders who want to copy trades from specific Discord/Telegram community admins.</p>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="corporate-header">
+                            <h3>Select Your Trading Admin</h3>
+                            <p class="section-desc">Choose an expert trader to copy trades from</p>
+                            <span class="badge">Corporate Account</span>
                         </div>
 
-                        <!-- Admin Selection Area (shown only for corporate accounts) -->
-                        <div id="corporateAdminArea" class="admin-select-wrapper mt-4 {{ old('account_type') == 'corporate' ? '' : 'hidden' }}">
+                        <!-- Admin Selection Area -->
+                        <div id="corporateAdminArea" class="admin-select-wrapper">
 
                             <!-- Header with count and search -->
                             <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 pb-2 gap-2" style="border-bottom: 1px dashed #e2e8f0;">
@@ -677,6 +672,7 @@
                                             <span id="adminCount">{{ $feeds->count() }}</span> available
                                         </span>
                                         @endif
+                                    </h5>
                                 </div>
 
                                 <!-- Search Bar -->
@@ -706,7 +702,7 @@
                             </div>
 
                             <!-- Admin List with Search Filter -->
-                            <div class="row g-3" style="max-height: 380px; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: #8bc905 #e2e8f0;" id="adminList">
+                            <div class="row g-3" style="max-height: 450px; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: #8bc905 #e2e8f0;" id="adminList">
                                 @foreach($feeds as $feed)
                                 <div class="col-12 admin-item"
                                     data-admin-name="{{ strtolower($feed->admin_name) }}"
@@ -714,7 +710,7 @@
                                     data-profit="{{ $feed->profit_margin }}">
 
                                     <div class="admin-option d-flex align-items-center p-3 rounded-3 w-100 {{ old('copy_admin_id') == $feed->id ? 'selected' : '' }}"
-                                        onclick="selectCorporateAdmin('{{ $feed->id }}', '{{ $feed->admin_name }}', '{{ $feed->server_name }}')"
+                                        onclick="selectCorporateAdmin('{{ $feed->id }}', '{{ addslashes($feed->admin_name) }}', '{{ addslashes($feed->server_name) }}')"
                                         style="background: {{ old('copy_admin_id') == $feed->id ? '#f0f9e8' : '#ffffff' }};
                                                    border: 1px solid {{ old('copy_admin_id') == $feed->id ? '#8bc905' : '#edf2f7' }};
                                                    transition: all 0.2s ease;
@@ -727,7 +723,6 @@
                                                 style="width: 50px; height: 50px; border-color: {{ old('copy_admin_id') == $feed->id ? '#8bc905' : '#e2e8f0' }};">
                                                 <img src="{{ asset('storage/admins/'.$feed->admin_profile_image) }}"
                                                     class="w-100 h-100 object-fit-cover">
-
                                             </div>
                                             @else
                                             <div class="rounded-circle d-flex align-items-center justify-content-center"
@@ -839,7 +834,7 @@
                             </div>
                             @endif
                         </div>
-                        @error('account_type') <span class="text-danger small">{{ $message }}</span> @enderror
+                        @error('copy_admin_id') <span class="text-danger small">{{ $message }}</span> @enderror
                     </div>
 
                     <!-- Financial Information -->
@@ -848,11 +843,20 @@
                         <p class="section-desc">This helps us personalize your experience</p>
 
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold">Investment Amount <span class="text-muted">($)</span></label>
-                                <input type="number" name="investment_amount" class="form-control" value="{{ old('investment_amount', 1000) }}" min="0" step="100" required>
-                                @error('investment_amount') <span class="text-danger small">{{ $message }}</span> @enderror
-                            </div>
+                           <div class="col-md-6 mb-3">
+    <label class="form-label fw-semibold">Investment Amount <span class="text-muted">($)</span></label>
+    <div class="d-flex gap-2">
+        <input type="number" name="investment_amount" id="investmentAmount" class="form-control" value="{{ old('investment_amount', 1000) }}" min="0" step="100" required style="flex: 1;">
+        <button type="button" id="quickAddBtn" class="btn btn-sm px-3" style="background: #8bc905; color: white; border-radius: 8px; white-space: nowrap;">
+            + Add $500
+        </button>
+    </div>
+    <small class="text-muted d-block mt-1">
+        <i class="fas fa-arrow-up text-success me-1"></i> add more / 
+        <i class="fas fa-arrow-down text-danger me-1"></i> reduce amount
+    </small>
+    @error('investment_amount') <span class="text-danger small">{{ $message }}</span> @enderror
+</div>
 
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-semibold">Financial Alternative</label>
@@ -901,7 +905,7 @@
                     </div>
 
                     <button type="submit" class="save-btn" id="submitBtn">
-                        <span class="btn-text">Complete Profile & Finish Registration</span>
+                        <span class="btn-text">Complete  Registration</span>
                         <span class="btn-loader hidden">
                             <i class="fas fa-spinner fa-spin"></i>
                         </span>
@@ -935,39 +939,6 @@
             element.classList.add('selected');
         } else {
             element.classList.remove('selected');
-        }
-    }
-
-    // Account type selection
-    function selectAccountType(type) {
-        document.getElementById('account_personal').checked = (type === 'personal');
-        document.getElementById('account_corporate').checked = (type === 'corporate');
-
-        // Update UI
-        document.querySelectorAll('[onclick^="selectAccountType"]').forEach(card => {
-            card.classList.remove('selected');
-        });
-
-        event.currentTarget.classList.add('selected');
-
-        // Show/hide admin area
-        const adminArea = document.getElementById('corporateAdminArea');
-        if (type === 'corporate') {
-            adminArea.classList.remove('hidden');
-            setTimeout(() => {
-                initializeSearch();
-            }, 100);
-        } else {
-            adminArea.classList.add('hidden');
-            // Clear corporate selections
-            document.getElementById('copy_admin_id').value = '';
-            document.getElementById('copy_admin_name').value = '';
-            document.getElementById('copy_server_name').value = '';
-
-            const indicator = document.getElementById('selectedAdminIndicator');
-            if (indicator) {
-                indicator.style.display = 'none';
-            }
         }
     }
 
@@ -1139,39 +1110,44 @@
             }
         });
 
-        // Check if corporate was previously selected
-        const accountType = document.querySelector('input[name="account_type"]:checked')?.value;
-        if (accountType === 'corporate') {
-            document.getElementById('corporateAdminArea')?.classList.remove('hidden');
+        // Initialize search
+        setTimeout(() => {
+            initializeSearch();
+        }, 100);
 
-            setTimeout(() => {
-                initializeSearch();
-            }, 100);
+        // Check for previously selected admin
+        const copyAdminId = document.getElementById('copy_admin_id').value;
+        if (copyAdminId) {
+            document.querySelectorAll('.admin-option').forEach(option => {
+                if (option.getAttribute('onclick')?.includes(`'${copyAdminId}'`)) {
+                    option.classList.add('selected');
+                    option.style.background = '#f0f9e8';
+                    option.style.borderColor = '#8bc905';
 
-            const copyAdminId = document.getElementById('copy_admin_id').value;
-            if (copyAdminId) {
-                document.querySelectorAll('.admin-option').forEach(option => {
-                    if (option.getAttribute('onclick')?.includes(`'${copyAdminId}'`)) {
-                        option.classList.add('selected');
-                        option.style.background = '#f0f9e8';
-                        option.style.borderColor = '#8bc905';
-
-                        const adminName = document.getElementById('copy_admin_name').value;
-                        if (adminName) {
-                            const indicator = document.getElementById('selectedAdminIndicator');
-                            const selectedNameSpan = document.getElementById('selectedAdminName');
-                            if (indicator && selectedNameSpan) {
-                                selectedNameSpan.textContent = adminName;
-                                indicator.style.display = 'block';
-                            }
+                    const adminName = document.getElementById('copy_admin_name').value;
+                    if (adminName) {
+                        const indicator = document.getElementById('selectedAdminIndicator');
+                        const selectedNameSpan = document.getElementById('selectedAdminName');
+                        if (indicator && selectedNameSpan) {
+                            selectedNameSpan.textContent = adminName;
+                            indicator.style.display = 'block';
                         }
                     }
-                });
-            }
-        } else {
-            initializeSearch();
+                }
+            });
         }
     });
+
+    // Quick add button
+const quickAddBtn = document.getElementById('quickAddBtn');
+const investmentInput = document.getElementById('investmentAmount');
+
+if (quickAddBtn && investmentInput) {
+    quickAddBtn.addEventListener('click', function() {
+        let currentValue = parseInt(investmentInput.value) || 0;
+        investmentInput.value = currentValue + 500;
+    });
+}
 </script>
 
 <style>

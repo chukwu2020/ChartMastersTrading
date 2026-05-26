@@ -387,7 +387,7 @@ $instrInitial = strtoupper(substr($instrName, 0, 1));
                 <div class="flex flex-wrap items-center gap-2 mb-4">
                     @if($strategy->difficulty_level)
                     <span class="htag {{ $dc }}">
-                        <iconify-icon icon="ph:chart-line-fill"></iconify-icon>
+                        <iconify-icon style="color:#8AC304 !important;"  icon="ph:chart-line-fill"></iconify-icon>
                         {{ ucfirst($strategy->difficulty_level) }}
                     </span>
                     @endif
