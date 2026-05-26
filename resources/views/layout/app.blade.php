@@ -41,7 +41,7 @@
     <script>
         (function() {
             var options = {
-                whatsapp: "+44 (774) 266-3627",
+                whatsapp: "+44 (774) 266-3627", 
                 call_to_action: "Contact us!",
                 position: "left"
             };

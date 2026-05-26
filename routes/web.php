@@ -20,6 +20,7 @@ use App\Http\Controllers\{
     Auth\ForgotPasswordController,
     CopyTradingController,
     MessageController,
+    StrategyController,
     UserAuthController,
     UserKycController,
     WithdrawalController
@@ -379,6 +380,26 @@ Route::post('/withdrawals/{id}/bank-fee', [AdminController::class, 'updateBankFe
  Route::get('/payouts', [UserController::class, 'dashboardpayouts'])->name('dashboardpayouts');
 
 
+// In routes/web.php - add these routes inside the auth middleware group
 
+// Strategy/Course Routes
+Route::prefix('strategies')->name('strategies.')->group(function () {
+    Route::get('/', [StrategyController::class, 'strategyindex'])->name('strategyindex');
+    Route::get('/{id}', [StrategyController::class, 'strategyshow'])->name('strategyshow');
+    Route::post('/{id}/enroll', [StrategyController::class, 'strategyenroll'])->name('strategyenroll');
+    Route::post('/upgrade/{currentId}/{newId}', [StrategyController::class, 'strategyupgrade'])->name('strategyupgrade');
+    Route::get('/{id}/learn', [StrategyController::class, 'strategylearn'])->name('strategylearn');
+});
+
+// Admin Strategy Routes
+Route::prefix('admin/strategies')->name('admin.strategies.')->middleware('isAdmin')->group(function () {
+    Route::get('/', [AdminController::class, 'strategyindex'])->name('strategyindex');
+    Route::get('/create', [AdminController::class, 'strategycreate'])->name('strategycreate');
+    Route::post('/', [AdminController::class, 'strategystore'])->name('strategystore');
+    Route::get('/{id}/edit', [AdminController::class, 'strategyedit'])->name('strategyedit');
+    Route::put('/{id}', [AdminController::class, 'strategyupdate'])->name('strategyupdate');
+    Route::delete('/{id}', [AdminController::class, 'strategydestroy'])->name('strategydestroy');
+    Route::get('/{id}/enrollments', [AdminController::class, 'strategyenrollments'])->name('strategyenrollments');
+});
 
 });

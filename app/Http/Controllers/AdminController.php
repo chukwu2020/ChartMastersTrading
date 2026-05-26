@@ -19,6 +19,8 @@ use App\Models\WithdrawalCard;
 use App\Notifications\AdminMessageNotification;
 use App\Notifications\IDVerificationSubmitted;
 use App\Models\Payout;
+use App\Models\Strategy;
+use App\Models\StrategyEnrollment;
 use App\Notifications\TransactionNotification;
 use App\Notifications\AdminCopyTradingController;
 use Carbon\Carbon;
@@ -340,6 +342,7 @@ public function showApprovedWithdrawals()
         $totalDeposits = User::sum('available_balance');
         $pendingDepositsCount = Deposit::where('status', 'pending')->count();
 
+   $pendingWithdrawalsCount = Withdrawal::where('status', 'pending')->count();
         $pendingCopyCount = CopyTradingRequest::where('status', 'pending')->count();
 
         $totalWithdrawals = Withdrawal::where('status', 'approved')
@@ -354,7 +357,9 @@ public function showApprovedWithdrawals()
     'amount_invested',
     'user',
     'pendingDepositsCount',
-    'pendingCopyCount' 
+    'pendingCopyCount',
+    'pendingWithdrawalsCount'
+
 ));
     }
 
@@ -1344,6 +1349,223 @@ public function rejectBalanceWithdrawal(Request $request, $id)
 }
 
 
+// strategy enrollments
 
+    /**
+     * Display a listing of strategies.
+     */
+    public function strategyindex()
+    {
+        $strategies = Strategy::withCount('enrollments')
+            ->orderBy('sort_order')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+        
+        $stats = [
+            'total_strategies' => Strategy::count(),
+            'active_strategies' => Strategy::where('is_active', true)->count(),
+            'total_enrollments' => StrategyEnrollment::count(),
+            'active_enrollments' => StrategyEnrollment::where('status', 'active')->count(),
+            'total_revenue' => StrategyEnrollment::sum('amount_paid'),
+        ];
+        
+        return view('admin.strategies.index', compact('strategies', 'stats'));
+    }
+    
+    /**
+     * Show form for creating a new strategy.
+     */
+    public function strategycreate()
+    {
+        return view('admin.strategies.create');
+    }
+    
+    /**
+     * Store a newly created strategy.
+     */
+ /**
+ * Store a newly created strategy.
+ */
+public function strategystore(Request $request)
+{
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'slug' => 'nullable|string|max:255|unique:strategies,slug',
+        'description' => 'required|string',
+        'long_description' => 'nullable|string',
+        'price' => 'required|numeric|min:0',
+        'duration_days' => 'nullable|integer|min:0',
+        'features' => 'nullable|array',
+        'features.*' => 'string',
+        'modules' => 'nullable|array',
+        'modules.*.title' => 'required|string',
+        'modules.*.content' => 'required|string',
+        'modules.*.video_url' => 'nullable|url',
+        'difficulty_level' => 'nullable|in:beginner,intermediate,advanced,expert',
+        'learning_objectives' => 'nullable|array',
+        'learning_objectives.*' => 'string',
+        'prerequisites' => 'nullable|array',
+        'prerequisites.*' => 'string',
+        'instructor_name' => 'nullable|string|max:255',
+        'instructor_bio' => 'nullable|string',
+        'instructor_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        'cover_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        'badge_text' => 'nullable|string|max:50',
+        'is_active' => 'nullable|boolean',
+        'is_popular' => 'nullable|boolean',
+        'sort_order' => 'nullable|integer',
+        'estimated_hours' => 'nullable|integer|min:0',
+    ]);
+    
+    // Prepare data array
+    $data = [
+        'name' => $validated['name'],
+        'slug' => $validated['slug'] ?? \Illuminate\Support\Str::slug($validated['name']),
+        'description' => $validated['description'],
+        'long_description' => $validated['long_description'] ?? null,
+        'price' => $validated['price'],
+        'duration_days' => $validated['duration_days'] ?? null,
+        'difficulty_level' => $validated['difficulty_level'] ?? null,
+        'instructor_name' => $validated['instructor_name'] ?? null,
+        'instructor_bio' => $validated['instructor_bio'] ?? null,
+        'badge_text' => $validated['badge_text'] ?? null,
+        'is_active' => $request->has('is_active'),
+        'is_popular' => $request->has('is_popular'),
+        'sort_order' => $validated['sort_order'] ?? 0,
+        'estimated_hours' => $validated['estimated_hours'] ?? null,
+    ];
+    
+    // Handle JSON fields - convert arrays to JSON
+    if (isset($validated['features']) && is_array($validated['features'])) {
+        $data['features'] = json_encode(array_values(array_filter($validated['features'])));
+    }
+    
+    if (isset($validated['modules']) && is_array($validated['modules'])) {
+        $data['modules'] = json_encode(array_values($validated['modules']));
+    }
+    
+    if (isset($validated['learning_objectives']) && is_array($validated['learning_objectives'])) {
+        $data['learning_objectives'] = json_encode(array_values(array_filter($validated['learning_objectives'])));
+    }
+    
+    if (isset($validated['prerequisites']) && is_array($validated['prerequisites'])) {
+        $data['prerequisites'] = json_encode(array_values(array_filter($validated['prerequisites'])));
+    }
+    
+    // Handle instructor image upload
+    if ($request->hasFile('instructor_image')) {
+        $path = $request->file('instructor_image')->store('strategies/instructors', 'public');
+        $data['instructor_image'] = $path;
+    }
+    
+    // Handle cover image upload
+    if ($request->hasFile('cover_image')) {
+        $path = $request->file('cover_image')->store('strategies/covers', 'public');
+        $data['cover_image'] = $path;
+    }
+    
+    Strategy::create($data);
+    
+    return redirect()->route('admin.strategies.strategyindex')
+        ->with('success', 'Course created successfully.');
+}
+    
+    /**
+     * Show form for editing a strategy.
+     */
+    public function strategyedit($id)
+    {
+        $strategy = Strategy::findOrFail($id);
+        return view('admin.strategies.edit', compact('strategy'));
+    }
+    
+    /**
+     * Update the specified strategy.
+     */
+    public function strategyupdate(Request $request, $id)
+    {
+        $strategy = Strategy::findOrFail($id);
+        
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:strategies,slug,' . $id,
+            'description' => 'required|string',
+            'long_description' => 'nullable|string',
+            'price' => 'required|numeric|min:0',
+            'duration_days' => 'nullable|integer|min:0',
+            'features' => 'nullable|array',
+            'features.*' => 'string',
+            'modules' => 'nullable|array',
+            'modules.*.title' => 'required|string',
+            'modules.*.content' => 'required|string',
+            'modules.*.video_url' => 'nullable|url',
+            'difficulty_level' => 'nullable|in:beginner,intermediate,advanced,expert',
+            'learning_objectives' => 'nullable|array',
+            'learning_objectives.*' => 'string',
+            'prerequisites' => 'nullable|array',
+            'prerequisites.*' => 'string',
+            'instructor_name' => 'nullable|string|max:255',
+            'instructor_bio' => 'nullable|string',
+            'instructor_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'cover_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'badge_text' => 'nullable|string|max:50',
+            'is_active' => 'nullable|boolean',
+            'is_popular' => 'nullable|boolean',
+            'sort_order' => 'nullable|integer',
+            'estimated_hours' => 'nullable|integer|min:0',
+        ]);
+        
+        $data = $validated;
+        $data['is_active'] = $request->has('is_active');
+        $data['is_popular'] = $request->has('is_popular');
+        
+        if ($request->hasFile('instructor_image')) {
+            $path = $request->file('instructor_image')->store('strategies/instructors', 'public');
+            $data['instructor_image'] = $path;
+        }
+        
+        if ($request->hasFile('cover_image')) {
+            $path = $request->file('cover_image')->store('strategies/covers', 'public');
+            $data['cover_image'] = $path;
+        }
+        
+        $strategy->update($data);
+        
+        return redirect()->route('admin.strategies.strategyindex')
+            ->with('success', 'Strategy updated successfully.');
+    }
+    
+    /**
+     * Delete a strategy.
+     */
+    public function strategydestroy($id)
+    {
+        $strategy = Strategy::findOrFail($id);
+        
+        // Check if there are enrollments
+        if ($strategy->enrollments()->count() > 0) {
+            return back()->with('error', 'Cannot delete strategy with active enrollments.');
+        }
+        
+        $strategy->delete();
+        
+        return redirect()->route('admin.strategies.strategyindex')
+            ->with('success', 'Strategy deleted successfully.');
+    }
+    
+    /**
+     * Display enrollments for a specific strategy.
+     */
+    public function strategyenrollments($id)
+    {
+        $strategy = Strategy::with(['enrollments.user'])->findOrFail($id);
+        
+        $enrollments = $strategy->enrollments()
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+        
+        return view('admin.strategies.enrollments', compact('strategy', 'enrollments'));
+    }
 
 }

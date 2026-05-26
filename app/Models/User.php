@@ -54,10 +54,23 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(WithdrawalCard::class);
     }
 
-    public function userKyc()
-    {
-        return $this->hasOne(UserKyc::class);
-    }
+ 
+    // In app/Models/User.php - add these methods
+
+public function userKyc()
+{
+    return $this->hasOne(UserKyc::class)->latest();
+}
+
+public function getKycStatusAttribute()
+{
+    return $this->userKyc?->status ?? 'not_submitted';
+}
+
+public function isKycVerified()
+{
+    return $this->userKyc && $this->userKyc->status === 'approved';
+}
  // Role
     public function role()
     {
@@ -181,6 +194,28 @@ public function hasActiveMembership()
 public function activePlan()
 {
     return $this->hasOne(Investment::class)->where('status', 'active');
+}
+
+
+// In app/Models/User.php - add these relationships
+
+public function strategyEnrollments()
+{
+    return $this->hasMany(StrategyEnrollment::class);
+}
+
+public function activeStrategies()
+{
+    return $this->belongsToMany(Strategy::class, 'strategy_enrollments')
+        ->wherePivot('status', 'active')
+        ->where(function ($q) {
+            $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+        });
+}
+
+public function hasActiveStrategy($strategyId)
+{
+    return $this->activeStrategies()->where('strategies.id', $strategyId)->exists();
 }
 
 }

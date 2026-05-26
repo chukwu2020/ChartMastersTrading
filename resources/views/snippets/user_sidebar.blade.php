@@ -1,9 +1,11 @@
 @php
     use App\Models\WithdrawalCard;
     use App\Models\CopyTradingRequest;
+    use App\Models\Strategy;
     
     $cardExists = auth()->check() ? WithdrawalCard::where('user_id', auth()->id())->exists() : false;
     $pendingCount = auth()->check() ? CopyTradingRequest::where('user_id', auth()->id())->where('status', 'pending')->count() : 0;
+    $activeStrategiesCount = auth()->check() ? Strategy::active()->count() : 0;
 @endphp
 
 <aside class="sidebar" style="background-image: url('/assets/images/hero/hero-image-1.svg'); background-position: center; background-size: cover;">
@@ -14,12 +16,11 @@
     </button>
 
     <!-- Logo -->
- <div class="logo-container lg:hidden">
-    <img src="/assets/images/chartmasterbrandname1.png"  
-         alt="ChartMasters Circle" 
-         class="brand-logo">
-</div>
-
+    <div class="logo-container lg:hidden">
+        <img src="/assets/images/chartmasterbrandname1.png"  
+             alt="ChartMasters Circle" 
+             class="brand-logo">
+    </div>
 
     <!-- Sidebar Menu -->
     <div class="sidebar-menu-area">
@@ -94,6 +95,51 @@
                 </ul>
             </li>
 
+            <!-- 🆕 LEARNING SECTION - Trading Courses -->
+            <li class="menu-section">
+                <div class="menu-section-title">
+                    <iconify-icon icon="ph:graduation-cap-bold"></iconify-icon>
+                    <span>Learning</span>
+                </div>
+                <ul class="menu-items">
+                    <li class="dropdown">
+                        <a href="javascript:void(0)" class="menu-link dropdown-trigger {{ request()->routeIs('strategies.*') ? 'active' : '' }}">
+                            <iconify-icon icon="ph:book-open-bold"></iconify-icon>
+                            <span>Trading Courses</span>
+                            @if($activeStrategiesCount > 0)
+                                <span class="badge-new">{{ $activeStrategiesCount }}</span>
+                            @endif
+                            <iconify-icon icon="ph:caret-down-bold" class="dropdown-arrow"></iconify-icon>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="{{ route('strategies.strategyindex') }}" class="dropdown-link {{ request()->routeIs('strategies.index') ? 'active' : '' }}">
+                                    <iconify-icon icon="ph:books-bold"></iconify-icon>
+                                    <span>All Courses</span>
+                                </a>
+                            </li>
+                            @php
+                                $activeEnrollments = auth()->check() ? \App\Models\StrategyEnrollment::where('user_id', auth()->id())
+                                    ->where('status', 'active')
+                                    ->where(function($q) {
+                                        $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                                    })
+                                    ->count() : 0;
+                            @endphp
+                            @if($activeEnrollments > 0)
+                            <li>
+                                <a href="{{ route('strategies.strategyindex') }}#my-courses" class="dropdown-link">
+                                    <iconify-icon icon="ph:play-circle-bold"></iconify-icon>
+                                    <span>My Courses</span>
+                                    <span class="badge-active">{{ $activeEnrollments }}</span>
+                                </a>
+                            </li>
+                            @endif
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+
             <!-- FINANCE SECTION -->
             <li class="menu-section">
                 <div class="menu-section-title">
@@ -130,10 +176,10 @@
                             <iconify-icon icon="ph:caret-down-bold" class="dropdown-arrow"></iconify-icon>
                         </a>
                         <ul class="dropdown-menu">
-                              <li>
+                            <li>
                                 <a href="{{ route('user.withdraw.form') }}" class="dropdown-link {{ request()->routeIs('user.withdraw.form') ? 'active' : '' }}">
-                                    <iconify-icon icon="ph:list-bold"></iconify-icon>
-                                    <span>Withdraw</span>
+                                    <iconify-icon icon="ph:arrow-square-out-bold"></iconify-icon>
+                                    <span>Withdraw Funds</span>
                                 </a>
                             </li>
                             <li>
@@ -180,19 +226,16 @@
                             <span>Rules & Guidelines</span>
                         </a>
                     </li>
-                     <li>
+                    <li>
                         <a href="{{ route('dashboardpayouts') }}" class="menu-link {{ request()->routeIs('dashboardpayouts') ? 'active' : '' }}">
-                           
-                           
-                          <iconify-icon icon="mdi:comment-text"></iconify-icon>
-                         
+                            <iconify-icon icon="mdi:comment-text"></iconify-icon>
                             <span>Testimonials</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('user.psychology') }}" class="menu-link {{ request()->routeIs('user.psychology') ? 'active' : '' }}">
                             <iconify-icon icon="ph:brain-bold"></iconify-icon>
-                            <span> Psychology</span>
+                            <span>Psychology</span>
                             <span class="badge-read">READ</span>
                         </a>
                     </li>
@@ -205,36 +248,40 @@
                 </ul>
             </li>
 
-          <!-- SETTINGS SECTION with Logout -->
-<li class="menu-section">
-    <div class="menu-section-title">
-        <iconify-icon icon="ph:gear-bold"></iconify-icon>
-        <span>Settings</span>
-    </div>
-    <ul class="menu-items">
-        <li>
-            <a href="{{ route('profile.show') }}" class="menu-link {{ request()->routeIs('profile.show') ? 'active' : '' }}">
-                <iconify-icon icon="ph:user-circle-bold"></iconify-icon>
-                <span>Profile Settings</span>
-            </a>
-        </li>
-    </ul>
-    
-    <!-- Logout Button inside Settings section -->
-    <div class="logout-wrapper" style="margin-bottom: 6rem !important;">
-        <a href="{{ route('signout') }}" 
-           onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
-           class="logout-btn">
-            <iconify-icon icon="ph:sign-out-bold"></iconify-icon>
-            <span>Logout</span>
-        </a>
-        <form id="logout-form" method="POST" action="{{ route('signout') }}" class="hidden">
-            @csrf
-        </form>
-    </div>
-</li>
-
-          
+            <!-- SETTINGS SECTION with Logout -->
+            <li class="menu-section">
+                <div class="menu-section-title">
+                    <iconify-icon icon="ph:gear-bold"></iconify-icon>
+                    <span>Settings</span>
+                </div>
+                <ul class="menu-items">
+                    <li>
+                        <a href="{{ route('profile.show') }}" class="menu-link {{ request()->routeIs('profile.show') ? 'active' : '' }}">
+                            <iconify-icon icon="ph:user-circle-bold"></iconify-icon>
+                            <span>Profile Settings</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('user.kyc.upload') }}" class="menu-link {{ request()->routeIs('user.kyc.*') ? 'active' : '' }}">
+                            <iconify-icon icon="ph:identification-badge-bold"></iconify-icon>
+                            <span>KYC Verification</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <!-- Logout Button inside Settings section -->
+                <div class="logout-wrapper" style="margin-bottom: 6rem !important;">
+                    <a href="{{ route('signout') }}" 
+                       onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+                       class="logout-btn">
+                        <iconify-icon icon="ph:sign-out-bold"></iconify-icon>
+                        <span>Logout</span>
+                    </a>
+                    <form id="logout-form" method="POST" action="{{ route('signout') }}" class="hidden">
+                        @csrf
+                    </form>
+                </div>
+            </li>
         </ul>
     </div>
 </aside>
@@ -256,7 +303,7 @@
         position: fixed;
         left: 0;
         top: 0;
-        height: 120vh;
+        height: 100vh;
         z-index: 1100;
         transition: all 0.3s ease;
         overflow-y: auto;
@@ -274,44 +321,43 @@
         background: var(--primary-green);
         border-radius: 3px;
     }
-.logout-wrapper {
-    margin-top: 12px;
-    padding-top: 8px;
-    border-top: 1px solid rgba(158, 221, 5, 0.15);
-}
 
-.logout-btn {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px 16px;
-    margin: 0 8px;
-    border-radius: 8px;
-    text-decoration: none;
-    color: #ef4444;
-    font-size: 0.85rem;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    background: rgba(239, 68, 68, 0.08);
-}
+    .logout-wrapper {
+        margin-top: 12px;
+        padding-top: 8px;
+        border-top: 1px solid rgba(158, 221, 5, 0.15);
+    }
 
-.logout-btn:hover {
-    background: #ef4444;
-    color: white;
-    transform: translateX(4px);
-}
+    .logout-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 16px;
+        margin: 0 8px;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #ef4444;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        background: rgba(239, 68, 68, 0.08);
+    }
 
-.logout-btn iconify-icon {
-    font-size: 1rem;
-}
+    .logout-btn:hover {
+        background: #ef4444;
+        color: white;
+        transform: translateX(4px);
+    }
 
+    .logout-btn iconify-icon {
+        font-size: 1rem;
+    }
 
     /* Logo */
     .logo-container {
         padding: 12px 10px;
         border-bottom: 3px solid rgba(158, 221, 5, 0.15);
-     
-          margin-top: 26px;
+        margin-top: 26px;
     }
     .brand-logo {
         width: 280px !important;
@@ -383,7 +429,7 @@
     }
 
     /* Badges */
-    .badge-pending, .badge-read {
+    .badge-pending, .badge-read, .badge-new, .badge-active {
         margin-left: auto;
         background: linear-gradient(135deg, #f59e0b, #d97706);
         color: white;
@@ -391,6 +437,14 @@
         font-weight: 700;
         padding: 2px 6px;
         border-radius: 20px;
+    }
+    .badge-new {
+        background: linear-gradient(135deg, var(--primary-green), var(--accent-green));
+        color: var(--dark-green);
+    }
+    .badge-active {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
     }
     .live-badge {
         margin-left: auto;
@@ -425,67 +479,19 @@
         transform: rotate(180deg);
     }
 
-    /* Add these styles to your existing sidebar CSS */
+    .sidebar-menu-area {
+        flex: 1;
+        overflow-y: auto;
+        padding-bottom: 20px;
+    }
 
-/* Make sidebar content scroll properly */
-.sidebar-menu-area {
-    flex: 1;
-    overflow-y: auto;
-    padding-bottom: 20px;
-}
+    .sidebar-menu {
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+        padding-bottom: 20px;
+    }
 
-/* Ensure logout stays at bottom */
-.sidebar-menu {
-    display: flex;
-    flex-direction: column;
-    min-height: 100%;
-    padding-bottom: 20px;
-}
-
-.logout-item {
-    margin-top: auto;
-    margin-bottom: 20px;
-    padding-top: 16px;
-    border-top: 1px solid rgba(158, 221, 5, 0.15);
-}
-
-.logout-btn {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 16px;
-    margin: 0 12px;
-    border-radius: 10px;
-    text-decoration: none;
-    color: #ef4444;
-    font-size: 0.85rem;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    background: rgba(239, 68, 68, 0.08);
-}
-
-.logout-btn:hover {
-    background: #ef4444;
-    color: white;
-    transform: translateX(4px);
-}
-
-.logout-btn iconify-icon {
-    font-size: 1.1rem;
-}
-
-/* Ensure sidebar takes full height */
-.sidebar {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-}
-
-.sidebar-menu-area {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
     .dropdown-menu {
         list-style: none;
         padding: 4px 0 4px 44px;
@@ -495,7 +501,7 @@
         transition: max-height 0.25s ease-out;
     }
     .dropdown-menu.open {
-        max-height: 200px;
+        max-height: 300px;
     }
     .dropdown-link {
         display: flex;
@@ -508,6 +514,7 @@
         color: #6b7280;
         font-size: 0.8rem;
         transition: all 0.2s ease;
+        position: relative;
     }
     .dropdown-link:hover {
         background: var(--hover-bg);
@@ -520,6 +527,11 @@
     }
     .dropdown-link iconify-icon {
         font-size: 0.85rem;
+    }
+    .dropdown-link .badge-active {
+        margin-left: auto;
+        padding: 1px 5px;
+        font-size: 0.55rem;
     }
 
     /* Card Action */
@@ -549,32 +561,6 @@
     .action-btn:hover {
         background: var(--accent-green);
         transform: translateY(-1px);
-    }
-
-    /* Logout */
-    .logout-item {
-        margin: 20px 12px 24px;
-        padding-top: 8px;
-    }
-    .logout-btn {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px 16px;
-        border-radius: 8px;
-        text-decoration: none;
-        color: #dc2626;
-        font-size: 0.85rem;
-        font-weight: 600;
-        transition: all 0.2s ease;
-        background: rgba(220, 38, 38, 0.08);
-    }
-    .logout-btn:hover {
-        background: #dc2626;
-        color: white;
-    }
-    .logout-btn iconify-icon {
-        font-size: 1rem;
     }
 
     /* Mobile */
@@ -646,7 +632,6 @@
         }
 
         // Close sidebar when clicking link on mobile
-      
         const links = document.querySelectorAll('.menu-link:not(.dropdown-trigger), .dropdown-link');
         links.forEach(link => {
             link.addEventListener('click', () => {
@@ -655,6 +640,14 @@
                 }
             });
         });
+
+        // Handle hash navigation for My Courses
+        if (window.location.hash === '#my-courses') {
+            const coursesSection = document.querySelector('#my-courses-section');
+            if (coursesSection) {
+                coursesSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
     });
 
     // Function to open sidebar from hamburger menu
