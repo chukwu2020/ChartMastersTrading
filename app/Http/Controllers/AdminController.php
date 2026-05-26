@@ -1512,6 +1512,7 @@ class AdminController extends Controller
             'badge_text' => 'nullable|string|max:50',
             'is_active' => 'nullable|boolean',
             'is_popular' => 'nullable|boolean',
+            
             'sort_order' => 'nullable|integer',
             'estimated_hours' => 'nullable|string|max:100',
         ]);

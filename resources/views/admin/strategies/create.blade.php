@@ -135,10 +135,12 @@
                         <option value="expert">Expert</option>
                     </select>
                 </div>
+               
                 <div>
-                    <label class="form-label">Estimated Hours</label>
-                   <input type="text" name="estimated_hours" class="form-input" placeholder="e.g., 10 Hours, Self Paced" value="{{ old('estimated_hours') }}">
-                </div>
+    <label class="form-label">Estimated Hours</label>
+    <input type="text" name="estimated_hours" class="form-input" placeholder="e.g., 10 Hours, Self Paced, Unlimited Access" value="{{ old('estimated_hours') }}">
+    <p class="text-xs text-gray-400 mt-1">Examples: "10 Hours", "Self Paced", "Unlimited Access", "8 Weeks"</p>
+</div>
                 <div>
                     <label class="form-label">Instructor Name</label>
                     <input type="text" name="instructor_name" class="form-input" value="{{ old('instructor_name') }}">
