@@ -213,6 +213,7 @@
     display: block;
     margin-bottom: 1.75rem;
     overflow-wrap: break-word;
+    z-index: 11;
     }
 
     .about-course-panel h3 {
@@ -246,6 +247,7 @@
         border: 1.5px solid rgba(158, 221, 5, 0.2);
         border-radius: 10px;
         margin-bottom: 1.75rem;
+         
     }
 
     .is-av {
@@ -693,7 +695,7 @@
                             <p class="text-xs font-bold" style="color:var(--dg);">{{ $instrName }}</p>
                             <p class="text-xs text-gray-400">Your Instructor · Professional Trader</p>
                         </div>
-                        <a href="{{ route('strategies.strategyshow', $strategy->id) }}" class="ml-auto text-xs font-semibold" style="color:var(--dg);text-decoration:none;">
+                        <a href="{{ route('strategies.strategyshow', $strategy->id) }}" class="ml-auto live-btn text-xs font-semibold" style="color:var(--dg);text-decoration:none;">
                             Course Info →
                         </a>
                     </div>
