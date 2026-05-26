@@ -1415,7 +1415,7 @@ class AdminController extends Controller
             'is_active' => 'nullable|boolean',
             'is_popular' => 'nullable|boolean',
             'sort_order' => 'nullable|integer',
-            'estimated_hours' => 'nullable|integer|min:0',
+            'estimated_hours' => 'nullable|string|max:100',
         ]);
 
         // Prepare data array
@@ -1513,7 +1513,7 @@ class AdminController extends Controller
             'is_active' => 'nullable|boolean',
             'is_popular' => 'nullable|boolean',
             'sort_order' => 'nullable|integer',
-            'estimated_hours' => 'nullable|integer|min:0',
+            'estimated_hours' => 'nullable|string|max:100',
         ]);
 
         $data = [

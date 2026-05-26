@@ -137,7 +137,7 @@
                 </div>
                 <div>
                     <label class="form-label">Estimated Hours</label>
-                    <input type="number" name="estimated_hours" class="form-input" placeholder="e.g., 10" value="{{ old('estimated_hours') }}">
+                   <input type="text" name="estimated_hours" class="form-input" placeholder="e.g., 10 Hours, Self Paced" value="{{ old('estimated_hours') }}">
                 </div>
                 <div>
                     <label class="form-label">Instructor Name</label>
