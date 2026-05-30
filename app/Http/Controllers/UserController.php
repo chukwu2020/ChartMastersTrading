@@ -790,7 +790,14 @@ public function psychology(){
 
     public function lockedPage()
     {
-        return view('dashboard.lockedpage');
+  $user = auth()->user();
+
+$copyAdmin = \App\Models\ServerFeed::find($user->copy_admin_id);
+
+ return view('dashboard.lockedpage', compact(
+    'user',
+    'copyAdmin'
+));
     }
 
 
