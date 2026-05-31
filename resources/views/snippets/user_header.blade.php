@@ -42,6 +42,7 @@ body {
     transition: all 0.3s ease;
     text-decoration: none;
     box-shadow: 0 2px 8px rgba(88, 101, 242, 0.3);
+    cursor: pointer;
 }
 
 .discord-btn:hover {
@@ -103,10 +104,10 @@ body {
         <div class="flex items-center gap-3">
             
             {{-- Discord Button --}}
-            <a href="" target="_blank" class="discord-btn" rel="noopener noreferrer">
+            <div class="discord-btn" onclick="openDiscordInvite()">
                 <iconify-icon icon="ri:discord-fill" class="discord-icon"></iconify-icon>
-            </a>
-      
+            </div>
+
             {{-- Profile Dropdown --}}
             <div x-data="{ open: false }" class="relative">
                 <button @click="open = !open" class="focus:outline-none rounded-full overflow-hidden">
@@ -165,6 +166,15 @@ body {
         </div>
     </div>
 </header>
+
+<script>
+    // Open Discord invite (opens Discord app or prompts to download)
+    function openDiscordInvite() {
+        // This opens the general Discord invite page
+        // Users can log in or create an account
+        window.open('https://discord.com/invite', '_blank');
+    }
+</script>
 
 <script>
     // Mobile sidebar toggle
