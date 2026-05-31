@@ -30,35 +30,63 @@ body {
     position: relative;
 }
 
-/* Logo (simple + controlled) */
-.brand-logo {
-    height: 30px;
-    width: auto;
-    object-fit: contain;
-    margin-bottom: 3rem !important;
+/* Discord Button - matching profile size (w-11 h-11 = 44px) */
+.discord-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #5865F2, #4752C4);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(88, 101, 242, 0.3);
 }
 
-/* Center ONLY on mobile */
-.mobile-logo {
+.discord-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(88, 101, 242, 0.4);
+    background: linear-gradient(135deg, #4752C4, #3b45a8);
+}
+
+.discord-icon {
+    font-size: 24px;
+    color: white !important;
+}
+
+/* Tooltip on hover */
+.discord-btn {
+    position: relative;
+}
+
+.discord-btn::after {
+    content: "Join Discord";
     position: absolute;
+    bottom: -35px;
     left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 10;
-    
+    transform: translateX(-50%);
+    background: #1a1a2e;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    font-family: monospace;
+    z-index: 100;
 }
 
-/* Hide mobile logo on desktop */
-@media (min-width: 1024px) {
-    .mobile-logo {
-        display: none;
-        margin-bottom: 3rem !important;
-           height: 45px;
-    }
+.discord-btn:hover::after {
+    opacity: 1;
+    visibility: visible;
+    bottom: -30px;
 }
    </style>
-
-
 
     <div class="header-content">
         <!-- Mobile Hamburger -->
@@ -66,49 +94,39 @@ body {
             <iconify-icon icon="heroicons:bars-3-solid" style="font-size: 40px; color: #8bc905 !important;"></iconify-icon>
         </button>
 
-        <!-- Mobile Logo -->
-        <div class="lg:hidden mobile-logo">
-            <a href="{{ route('user_dashboard') }}">
-
-                <img src="/assets/images/chartmasterbrandname1.png" alt="ChartMasters Circle"
-                    class="brand-logo">
-            </a>
-
-        </div>
-
-        <!-- Desktop Hamburger  -->
+        <!-- Desktop Hamburger -->
         <button class="hidden lg:block sidebar-toggle text-[#0c3a30]">
             <iconify-icon icon="heroicons:bars-3-solid" class="text-2xl"></iconify-icon>
         </button>
 
         <!-- Right Side Controls -->
         <div class="flex items-center gap-3">
+            
+            {{-- Discord Button --}}
+            <a href="" target="_blank" class="discord-btn" rel="noopener noreferrer">
+                <iconify-icon icon="ri:discord-fill" class="discord-icon"></iconify-icon>
+            </a>
+      
             {{-- Profile Dropdown --}}
             <div x-data="{ open: false }" class="relative">
                 <button @click="open = !open" class="focus:outline-none rounded-full overflow-hidden">
                     <div class="text-center border-b border-neutral-200 dark:border-neutral-600">
                         @php
-
                         $profilePic = $user->profile->profile_pic ?? null;
-
                         $initials = collect(explode(' ', $user->name))
                         ->map(fn($word) => strtoupper(substr($word, 0, 1)))
                         ->take(2)
                         ->join('') ?: 'U';
                         @endphp
 
-                  @if ($profilePic)
-                          <img src="{{ asset('storage/profile_pics/' . $profilePic) }}"  alt="{{ $user->name }}" class="mx-auto rounded-full object-cover w-11 h-11"  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"/>
-                 
+                        @if ($profilePic)
+                            <img src="{{ asset('storage/profile_pics/' . $profilePic) }}" alt="{{ $user->name }}" class="mx-auto rounded-full object-cover w-11 h-11" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"/>
                         @else
-                        <div
-                            class="mx-auto w-11 h-11 rounded-full flex items-center justify-center font-semibold text-base select-none"
-                            style="background-color: #9EDD05; color: #0C3A30;">
-                            {{ $initials }}
-                        </div>
+                            <div class="mx-auto w-11 h-11 rounded-full flex items-center justify-center font-semibold text-base select-none" style="background-color: #9EDD05; color: #0C3A30;">
+                                {{ $initials }}
+                            </div>
                         @endif
                     </div>
-
                 </button>
 
                 <div x-show="open" @click.away="open = false" x-transition
@@ -118,7 +136,6 @@ body {
                     <div style="border-bottom: 1px solid #def1ee; padding-bottom: 0.5rem; margin-bottom: 0.5rem; text-align:center;">
                         <span style="display: block; font-size: 0.875rem; font-weight: 600; color: #0c3a30;">My Account</span>
                     </div>
-
 
                     <ul style="font-size: 0.875rem; display: flex; flex-direction: column; gap: 0.5rem;">
                         <li>
@@ -165,53 +182,55 @@ body {
     (function() {
         const translateTrigger = document.getElementById('translateTrigger');
         const translateElement = document.getElementById('google_translate_element');
-        const dropdownIcon = translateTrigger.querySelector('.dropdown-icon');
+        const dropdownIcon = translateTrigger?.querySelector('.dropdown-icon');
 
-        // Toggle dropdown visibility
-        function toggleDropdown() {
-            const isVisible = translateElement.style.display === 'block';
-            if (isVisible) {
-                translateElement.style.display = 'none';
-                translateTrigger.setAttribute('aria-expanded', 'false');
-                dropdownIcon.classList.remove('rotate-180');
-            } else {
-                translateElement.style.display = 'block';
-                translateTrigger.setAttribute('aria-expanded', 'true');
-                dropdownIcon.classList.add('rotate-180');
+        if (translateTrigger) {
+            // Toggle dropdown visibility
+            function toggleDropdown() {
+                const isVisible = translateElement.style.display === 'block';
+                if (isVisible) {
+                    translateElement.style.display = 'none';
+                    translateTrigger.setAttribute('aria-expanded', 'false');
+                    if (dropdownIcon) dropdownIcon.classList.remove('rotate-180');
+                } else {
+                    translateElement.style.display = 'block';
+                    translateTrigger.setAttribute('aria-expanded', 'true');
+                    if (dropdownIcon) dropdownIcon.classList.add('rotate-180');
 
-                if (!window.googleTranslateLoaded) {
-                    const script = document.createElement('script');
-                    script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
-                    document.body.appendChild(script);
-                    window.googleTranslateLoaded = true;
+                    if (!window.googleTranslateLoaded) {
+                        const script = document.createElement('script');
+                        script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+                        document.body.appendChild(script);
+                        window.googleTranslateLoaded = true;
 
-                    translateElement.innerHTML = '<div style="color:#333; padding: 8px;">Loading languages...</div>';
+                        translateElement.innerHTML = '<div style="color:#333; padding: 8px;">Loading languages...</div>';
+                    }
                 }
             }
-        }
 
-        // Click on language selector toggles dropdown
-        translateTrigger.addEventListener('click', function(e) {
-            e.stopPropagation();
-            toggleDropdown();
-        });
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!translateTrigger.contains(e.target) && !translateElement.contains(e.target)) {
-                translateElement.style.display = 'none';
-                translateTrigger.setAttribute('aria-expanded', 'false');
-                dropdownIcon.classList.remove('rotate-180');
-            }
-        });
-
-        // Accessibility: toggle on Enter/Space
-        translateTrigger.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
+            // Click on language selector toggles dropdown
+            translateTrigger.addEventListener('click', function(e) {
+                e.stopPropagation();
                 toggleDropdown();
-            }
-        });
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!translateTrigger.contains(e.target) && !translateElement.contains(e.target)) {
+                    translateElement.style.display = 'none';
+                    translateTrigger.setAttribute('aria-expanded', 'false');
+                    if (dropdownIcon) dropdownIcon.classList.remove('rotate-180');
+                }
+            });
+
+            // Accessibility: toggle on Enter/Space
+            translateTrigger.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleDropdown();
+                }
+            });
+        }
     })();
 
     // Google Translate Initialization function
@@ -257,7 +276,6 @@ body {
         display: flex;
         align-items: center;
         gap: 6px;
-
         padding: 5px 10px;
         border-radius: 4px;
         transition: all 0.2s;

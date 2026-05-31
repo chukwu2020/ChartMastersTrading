@@ -653,7 +653,7 @@
                     <!-- Corporate Account Section - Admin Selection -->
                     <div class="form-section" data-aos="fade-up" data-aos-delay="300">
                         <div class="corporate-header">
-                            <h3>Select Your Trading Admin</h3>
+                            <h3>Select Your Trading Admin From discord</h3>
                             <p class="section-desc">Choose an expert trader to copy trades from</p>
                             <span class="badge">Corporate Account</span>
                         </div>
@@ -666,7 +666,7 @@
                                 <div class="d-flex align-items-center gap-2">
                                     <h5 style="font-size: 14px; color: #0C3A30; font-weight: 600; margin: 0;">
                                         <i class="ri-user-star-line me-2" style="color: #8bc905;"></i>
-                                        Choose your admin to copy trades
+                                        Choose your admin from discord to copy trades
                                         @if(isset($feeds) && $feeds->count() > 0)
                                         <span class="badge rounded-pill" style="background: #8bc90520; color: #0C3A30; font-size: 11px; padding: 4px 10px;">
                                             <span id="adminCount">{{ $feeds->count() }}</span> available
@@ -743,7 +743,7 @@
 
                                                 <span class="admin-server-badge ms-2"
                                                     style="background: #8bc905; color: white; padding: 4px 10px; border-radius: 14px; font-size: 12px; font-weight: 600;">
-                                                    Copy
+                                                Join
                                                 </span>
                                             </div>
 
@@ -768,7 +768,7 @@
 
                                                 <small style="font-size: 12px; font-weight: 600; color: #475569;">
                                                     <i class="ri-file-copy-line me-1"></i>
-                                                    {{ number_format($feed->copying_trades ?? 0) }} copying
+                                                    {{ number_format($feed->copying_trades ?? 0) }} copying 
                                                 </small>
 
                                                 <!-- Win Rate Badge with Color Classes -->
