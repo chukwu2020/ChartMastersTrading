@@ -261,19 +261,19 @@ body {
         .goog-te-menu-frame {
             max-width: 100% !important;
             width: 100% !important;
-            box-sizing: border-box;
+            box-si zing: border-box;
         }
         .goog-te-menu2 {
             max-width: 100% !important;
             width: 100% !important;
-            overflow: auto !important;
+            overflow: auto !import ant;
         }
     `;
         document.head.appendChild(style);
     }
-</script>
+</script> 
 
-<style>
+<style>  
     /* Improved Language Selector Styles */
     .language-selector {
         position: relative;
@@ -290,14 +290,14 @@ body {
         border-radius: 4px;
         transition: all 0.2s;
     }
-
+  
     .translate-trigger:hover {
         background: rgba(255, 255, 255, 0.1);
     }
 
     .dropdown-icon {
         transition: transform 0.3s ease;
-    }
+    } 
 
     .dropdown-icon.rotate-180 {
         transform: rotate(180deg);
