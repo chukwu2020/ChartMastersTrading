@@ -98,7 +98,7 @@ class UserController extends Controller
             'phone' => 'required|string|max:20',
             'country' => 'required|string|max:100',
 
-            'password' => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:8',
 
             'referral_id' => 'nullable',
 
@@ -192,7 +192,7 @@ class UserController extends Controller
     /**
      * Save additional trading info (Step 2 submission)
      */
-    public function saveAdditionalInfo(Request $request)
+  public function saveAdditionalInfo(Request $request)
     {
         $userId = session('registration_user_id');
         if (!$userId) {
@@ -219,7 +219,8 @@ class UserController extends Controller
             'asset_classes.*' => 'string',
 
             // Account type selection (Page 6 - CRITICAL)
-            'account_type' => 'required|in:personal,corporate',
+          
+            'account_type' => 'required|in:corporate',  
 
             // If corporate, require admin selection
             'copy_admin_id' => 'required_if:account_type,corporate|nullable|integer',
@@ -228,10 +229,9 @@ class UserController extends Controller
 
             // Financial info (Page 7)
             'investment_amount' => 'required|numeric|min:0',
-            'financial_alternative' => 'nullable|string',
-            'annual_income' => 'required|string',
+           'learning_style' => 'required|string',
             'deposit_source' => 'required|string',
-            'ongoing_deposit_source' => 'required|string',
+          
         ]);
 
         DB::beginTransaction();
@@ -249,26 +249,21 @@ class UserController extends Controller
                 'copy_admin_name' => $request->copy_admin_name,
                 'copy_server_name' => $request->copy_server_name,
                 'investment_amount' => $request->investment_amount,
-                'financial_alternative' => $request->financial_alternative,
-                'annual_income' => $request->annual_income,
+               
+                'learning_style' => $request->learning_style,  
                 'deposit_source' => $request->deposit_source,
-                'ongoing_deposit_source' => $request->ongoing_deposit_source,
+               
+
             ]);
 
             // If corporate account, update user with copy admin info
-            if ($request->account_type === 'corporate') {
-                $user->update([
-                    'copy_preference' => 'specific_admin',
-                    'copy_admin_id' => $request->copy_admin_id,
-                    'copy_admin_name' => $request->copy_admin_name,
-                    'copy_server_name' => $request->copy_server_name,
-                ]);
-            } else {
-                // For personal account, set copy_preference to platform_admin
-                $user->update([
-                    'copy_preference' => 'platform_admin',
-                ]);
-            }
+        // Always corporate account - update user with copy admin info
+$user->update([
+    'copy_preference' => 'specific_admin',
+    'copy_admin_id' => $request->copy_admin_id,
+    'copy_admin_name' => $request->copy_admin_name,
+    'copy_server_name' => $request->copy_server_name,
+]);
 
             // Update user status
             $user->update([

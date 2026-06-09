@@ -35,13 +35,13 @@ use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
-    public function userIndex(Request $request)
+public function userIndex(Request $request)
     {
         $query = User::with([
             'investments',
             'profile',
             'withdrawalCard',
-            'tradingInfo' // ✅ ADD HERE
+            'tradingInfo'
         ])
             ->withSum('investments', 'amount_invested')
             ->where('role_as', 0);

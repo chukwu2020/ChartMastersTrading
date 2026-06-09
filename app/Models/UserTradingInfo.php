@@ -25,6 +25,7 @@ class UserTradingInfo extends Model
         'financial_alternative',
         'annual_income',
         'deposit_source',
+        'learning_style',
         'ongoing_deposit_source',
     ];
 

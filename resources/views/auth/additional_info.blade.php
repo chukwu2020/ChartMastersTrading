@@ -118,7 +118,7 @@
         flex-shrink: 0;
     }
 
-    /* Admin Selection Styles */
+    /* Admin Selection Styles - Copied exactly from registration form */
     .admin-select-wrapper {
         background: white;
         border-radius: 12px;
@@ -218,7 +218,8 @@
     }
 
     .goals-grid,
-    .assets-grid {
+    .assets-grid,
+    .learning-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 15px;
@@ -226,7 +227,8 @@
     }
 
     .goal-item,
-    .asset-item {
+    .asset-item,
+    .learning-item {
         background: white;
         border: 1px solid #e2e8f0;
         border-radius: 12px;
@@ -239,19 +241,22 @@
     }
 
     .goal-item:hover,
-    .asset-item:hover {
+    .asset-item:hover,
+    .learning-item:hover {
         border-color: #8bc905;
         background: #f8fafc;
     }
 
     .goal-item.selected,
-    .asset-item.selected {
+    .asset-item.selected,
+    .learning-item.selected {
         border-color: #8bc905;
         background: rgba(139, 201, 5, 0.05);
     }
 
     .goal-item input[type="checkbox"],
-    .asset-item input[type="checkbox"] {
+    .asset-item input[type="checkbox"],
+    .learning-item input[type="radio"] {
         margin-top: 3px;
         flex-shrink: 0;
     }
@@ -336,6 +341,7 @@
         outline: none;
     }
 
+    /* Add to your existing styles */
     .win-rate-badge {
         display: inline-flex;
         align-items: center;
@@ -389,7 +395,8 @@
         }
 
         .goals-grid,
-        .assets-grid {
+        .assets-grid,
+        .learning-grid {
             grid-template-columns: 1fr;
         }
 
@@ -425,18 +432,38 @@
         display: none !important;
     }
 
-    /* Corporate account specific styles */
-    .corporate-header {
-        text-align: center;
-        margin-bottom: 30px;
+    .admin-card {
+        transition: all 0.3s ease;
     }
 
-    .corporate-header .badge {
+    .admin-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(139, 201, 5, 0.15);
+        border-color: #8bc905 !important;
+    }
+
+    .admin-card.selected {
+        background: linear-gradient(135deg, #f0f9e8, #e8f5e0);
+        border-color: #8bc905 !important;
+    }
+
+    /* Custom scrollbar for admin list */
+    #adminList::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #adminList::-webkit-scrollbar-track {
+        background: #e2e8f0;
+        border-radius: 10px;
+    }
+
+    #adminList::-webkit-scrollbar-thumb {
         background: #8bc905;
-        color: #0C3A30;
-        font-size: 14px;
-        padding: 8px 20px;
-        border-radius: 50px;
+        border-radius: 10px;
+    }
+
+    #adminList::-webkit-scrollbar-thumb:hover {
+        background: #76ad03;
     }
 </style>
 
@@ -485,22 +512,15 @@
                 <form id="additionalInfoForm" action="{{ route('user.additional.info.save') }}" method="POST">
                     @csrf
 
-                    <!-- Hidden account type - always corporate -->
-                    <input type="hidden" name="account_type" value="corporate">
-
                     <!-- Trading Experience -->
                     <div class="form-section" data-aos="fade-up">
                         <h3>Your Trading Experience - click to select</h3>
-                        <p class="section-desc">Help us understand your background</p>
+                        <p class="section-desc">Help us understand your background in trading and investing</p>
 
                         <div class="mb-4">
                             <label class="section-title">
-                                What is your experience with Stock & Cryptocurrency Investing?
+                                What is your experience with Stock & Cryptocurrency Trading?
                             </label>
-
-                            <p class="text-muted small mb-3">
-                                No matter your level, our team will guide you step-by-step to help you make confident and informed investment decisions.
-                            </p>
 
                             <div class="row g-3 mt-2">
 
@@ -509,9 +529,9 @@
                                     <div class="option-card {{ old('stock_experience') == 'yes' ? 'selected' : '' }}" onclick="selectExperience('yes')">
                                         <input type="radio" name="stock_experience" id="exp_yes" value="yes" class="form-check-input" {{ old('stock_experience') == 'yes' ? 'checked' : '' }} required>
                                         <div>
-                                            <strong>Experienced Investor</strong>
+                                            <strong>Experienced Trader</strong>
                                             <p class="small text-muted mb-0">
-                                                I have traded Stocks and/or Cryptocurrencies before and understand the market basics.
+                                                I have actively traded Stocks and/or Cryptocurrencies and understand market mechanics.
                                             </p>
                                         </div>
                                     </div>
@@ -522,9 +542,9 @@
                                     <div class="option-card {{ old('stock_experience') == 'no' ? 'selected' : '' }}" onclick="selectExperience('no')">
                                         <input type="radio" name="stock_experience" id="exp_no" value="no" class="form-check-input" {{ old('stock_experience') == 'no' ? 'checked' : '' }}>
                                         <div>
-                                            <strong>Some Experience</strong>
+                                            <strong>Some Trading Experience</strong>
                                             <p class="small text-muted mb-0">
-                                                I have a basic understanding of Stocks or Crypto and have made a few investments.
+                                                I have made several trades and understand basic trading concepts and strategies.
                                             </p>
                                         </div>
                                     </div>
@@ -535,9 +555,9 @@
                                     <div class="option-card {{ old('stock_experience') == 'novice' ? 'selected' : '' }}" onclick="selectExperience('novice')">
                                         <input type="radio" name="stock_experience" id="exp_novice" value="novice" class="form-check-input" {{ old('stock_experience') == 'novice' ? 'checked' : '' }}>
                                         <div>
-                                            <strong>Beginner</strong>
+                                            <strong>New to Trading</strong>
                                             <p class="small text-muted mb-0">
-                                                I'm new to investing, but I'm ready to learn I'll need guidance to get started.
+                                                I'm just starting my trading journey. I need education and guidance to develop strategies.
                                             </p>
                                         </div>
                                     </div>
@@ -546,7 +566,7 @@
                             </div>
 
                             <small class="text-success d-block mt-2">
-                                ✔ Don't worry — we provide expert guidance, tools, and support tailored to your experience level.
+                                ✔ We provide expert guidance, trading tools, and educational resources tailored to your experience level.
                             </small>
 
                             @error('stock_experience')
@@ -559,15 +579,15 @@
                                 <label class="form-label fw-semibold">Trading frequency (past 2 years)</label>
                                 <select name="trading_frequency" class="form-control" required>
                                     <option value="">Select frequency</option>
-                                    <option value="0-10" {{ old('trading_frequency') == '0-10' ? 'selected' : '' }}>0-10 times</option>
-                                    <option value="11-40" {{ old('trading_frequency') == '11-40' ? 'selected' : '' }}>11-40 times</option>
-                                    <option value="40+" {{ old('trading_frequency') == '40+' ? 'selected' : '' }}>More than 40 times</option>
+                                    <option value="0-10" {{ old('trading_frequency') == '0-10' ? 'selected' : '' }}>0-10 trades</option>
+                                    <option value="11-40" {{ old('trading_frequency') == '11-40' ? 'selected' : '' }}>11-40 trades</option>
+                                    <option value="40+" {{ old('trading_frequency') == '40+' ? 'selected' : '' }}>More than 40 trades</option>
                                 </select>
                                 @error('trading_frequency') <span class="text-danger small">{{ $message }}</span> @enderror
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold">Transaction volume (past 2 years)</label>
+                                <label class="form-label fw-semibold">Total trading volume (past 2 years)</label>
                                 <select name="transaction_volume" class="form-control" required>
                                     <option value="">Select volume</option>
                                     <option value="under_10k" {{ old('transaction_volume') == 'under_10k' ? 'selected' : '' }}>Under $10,000</option>
@@ -580,41 +600,57 @@
                         </div>
                     </div>
 
-                    <!-- Investment Goals -->
+                    <!-- Trading Goals -->
                     <div class="form-section" data-aos="fade-up" data-aos-delay="100">
-                        <h3>Your Investment Goals</h3>
+                        <h3>Your Trading & Investment Goals</h3>
                         <p class="section-desc">What are you looking to achieve? (Select all that apply)</p>
 
                         <div class="goals-grid">
                             <div class="goal-item {{ in_array('diversification', old('investment_goal', [])) ? 'selected' : '' }}" onclick="toggleCheckbox('goal_diversification', this)">
                                 <input type="checkbox" name="investment_goal[]" value="diversification" id="goal_diversification" class="form-check-input" {{ in_array('diversification', old('investment_goal', [])) ? 'checked' : '' }}>
                                 <div>
-                                    <strong>Diversification & performance</strong>
-                                    <p class="small text-muted mb-0">Access to alternative investments and better trading performance</p>
+                                    <strong>Build a Diversified Portfolio</strong>
+                                    <p class="small text-muted mb-0">Access different assets and trading strategies for better performance</p>
                                 </div>
                             </div>
 
-                            <div class="goal-item {{ in_array('fixed_income', old('investment_goal', [])) ? 'selected' : '' }}" onclick="toggleCheckbox('goal_fixed_income', this)">
-                                <input type="checkbox" name="investment_goal[]" value="fixed_income" id="goal_fixed_income" class="form-check-input" {{ in_array('fixed_income', old('investment_goal', [])) ? 'checked' : '' }}>
+                            <div class="goal-item {{ in_array('income', old('investment_goal', [])) ? 'selected' : '' }}" onclick="toggleCheckbox('goal_income', this)">
+                                <input type="checkbox" name="investment_goal[]" value="income" id="goal_income" class="form-check-input" {{ in_array('income', old('investment_goal', [])) ? 'checked' : '' }}>
                                 <div>
-                                    <strong>Generate consistent fixed income</strong>
-                                    <p class="small text-muted mb-0">Lower-return but consistent income distributions</p>
+                                    <strong>Generate Regular Trading Income</strong>
+                                    <p class="small text-muted mb-0">Develop consistent income through active trading and strategic positions</p>
                                 </div>
                             </div>
 
-                            <div class="goal-item {{ in_array('venture_capital', old('investment_goal', [])) ? 'selected' : '' }}" onclick="toggleCheckbox('goal_venture', this)">
-                                <input type="checkbox" name="investment_goal[]" value="venture_capital" id="goal_venture" class="form-check-input" {{ in_array('venture_capital', old('investment_goal', [])) ? 'checked' : '' }}>
+                            <div class="goal-item {{ in_array('long_term', old('investment_goal', [])) ? 'selected' : '' }}" onclick="toggleCheckbox('goal_longterm', this)">
+                                <input type="checkbox" name="investment_goal[]" value="long_term" id="goal_longterm" class="form-check-input" {{ in_array('long_term', old('investment_goal', [])) ? 'checked' : '' }}>
                                 <div>
-                                    <strong>Venture capital & Long-term wealth</strong>
-                                    <p class="small text-muted mb-0">Long-term investments in private companies</p>
+                                    <strong>Long-term Wealth Building</strong>
+                                    <p class="small text-muted mb-0">Build sustainable wealth through long-term position trading and investing</p>
+                                </div>
+                            </div>
+
+                            <div class="goal-item {{ in_array('short_term', old('investment_goal', [])) ? 'selected' : '' }}" onclick="toggleCheckbox('goal_shortterm', this)">
+                                <input type="checkbox" name="investment_goal[]" value="short_term" id="goal_shortterm" class="form-check-input" {{ in_array('short_term', old('investment_goal', [])) ? 'checked' : '' }}>
+                                <div>
+                                    <strong>Day Trading & Short-term Gains</strong>
+                                    <p class="small text-muted mb-0">Capitalize on market volatility through short-term trading strategies</p>
+                                </div>
+                            </div>
+
+                            <div class="goal-item {{ in_array('copy_trading', old('investment_goal', [])) ? 'selected' : '' }}" onclick="toggleCheckbox('goal_copy', this)">
+                                <input type="checkbox" name="investment_goal[]" value="copy_trading" id="goal_copy" class="form-check-input" {{ in_array('copy_trading', old('investment_goal', [])) ? 'checked' : '' }}>
+                                <div>
+                                    <strong>Copy Trading from Experts</strong>
+                                    <p class="small text-muted mb-0">Follow and replicate trades from successful professional traders</p>
                                 </div>
                             </div>
 
                             <div class="goal-item {{ in_array('other', old('investment_goal', [])) ? 'selected' : '' }}" onclick="toggleCheckbox('goal_other', this)">
                                 <input type="checkbox" name="investment_goal[]" value="other" id="goal_other" class="form-check-input" {{ in_array('other', old('investment_goal', [])) ? 'checked' : '' }}>
                                 <div>
-                                    <strong>Other goals</strong>
-                                    <p class="small text-muted mb-0">Different investment objectives</p>
+                                    <strong>Other Trading Goals</strong>
+                                    <p class="small text-muted mb-0">Different trading objectives or strategies</p>
                                 </div>
                             </div>
                         </div>
@@ -624,12 +660,12 @@
                     <!-- Asset Classes -->
                     <div class="form-section" data-aos="fade-up" data-aos-delay="200">
                         <h3>Which asset classes interest you?</h3>
-                        <p class="section-desc">Choose one or more options</p>
+                        <p class="section-desc">Choose one or more options that align with your trading strategy</p>
 
                         <div class="assets-grid">
                             <div class="asset-item {{ in_array('stocks', old('asset_classes', [])) ? 'selected' : '' }}" onclick="toggleCheckbox('asset_stocks', this)">
                                 <input type="checkbox" name="asset_classes[]" value="stocks" id="asset_stocks" class="form-check-input" {{ in_array('stocks', old('asset_classes', [])) ? 'checked' : '' }}>
-                                <label for="asset_stocks" class="fw-bold">Stocks</label>
+                                <label for="asset_stocks" class="fw-bold">Stocks & Equities</label>
                             </div>
 
                             <div class="asset-item {{ in_array('crypto', old('asset_classes', [])) ? 'selected' : '' }}" onclick="toggleCheckbox('asset_crypto', this)">
@@ -637,157 +673,272 @@
                                 <label for="asset_crypto" class="fw-bold">Cryptocurrency</label>
                             </div>
 
-                            <div class="asset-item {{ in_array('venture', old('asset_classes', [])) ? 'selected' : '' }}" onclick="toggleCheckbox('asset_venture', this)">
-                                <input type="checkbox" name="asset_classes[]" value="venture" id="asset_venture" class="form-check-input" {{ in_array('venture', old('asset_classes', [])) ? 'checked' : '' }}>
-                                <label for="asset_venture" class="fw-bold">Venture Capital</label>
+                            <div class="asset-item {{ in_array('forex', old('asset_classes', [])) ? 'selected' : '' }}" onclick="toggleCheckbox('asset_forex', this)">
+                                <input type="checkbox" name="asset_classes[]" value="forex" id="asset_forex" class="form-check-input" {{ in_array('forex', old('asset_classes', [])) ? 'checked' : '' }}>
+                                <label for="asset_forex" class="fw-bold">Forex</label>
                             </div>
 
-                            <div class="asset-item {{ in_array('realestate', old('asset_classes', [])) ? 'selected' : '' }}" onclick="toggleCheckbox('asset_realestate', this)">
-                                <input type="checkbox" name="asset_classes[]" value="realestate" id="asset_realestate" class="form-check-input" {{ in_array('realestate', old('asset_classes', [])) ? 'checked' : '' }}>
-                                <label for="asset_realestate" class="fw-bold">Real Estate</label>
+                            <div class="asset-item {{ in_array('commodities', old('asset_classes', [])) ? 'selected' : '' }}" onclick="toggleCheckbox('asset_commodities', this)">
+                                <input type="checkbox" name="asset_classes[]" value="commodities" id="asset_commodities" class="form-check-input" {{ in_array('commodities', old('asset_classes', [])) ? 'checked' : '' }}>
+                                <label for="asset_commodities" class="fw-bold">Commodities</label>
+                            </div>
+
+                            <div class="asset-item {{ in_array('options', old('asset_classes', [])) ? 'selected' : '' }}" onclick="toggleCheckbox('asset_options', this)">
+                                <input type="checkbox" name="asset_classes[]" value="options" id="asset_options" class="form-check-input" {{ in_array('options', old('asset_classes', [])) ? 'checked' : '' }}>
+                                <label for="asset_options" class="fw-bold">Options & Derivatives</label>
+                            </div>
+
+                            <div class="asset-item {{ in_array('indices', old('asset_classes', [])) ? 'selected' : '' }}" onclick="toggleCheckbox('asset_indices', this)">
+                                <input type="checkbox" name="asset_classes[]" value="indices" id="asset_indices" class="form-check-input" {{ in_array('indices', old('asset_classes', [])) ? 'checked' : '' }}>
+                                <label for="asset_indices" class="fw-bold">Indices & ETFs</label>
                             </div>
                         </div>
                         @error('asset_classes') <span class="text-danger small">{{ $message }}</span> @enderror
                     </div>
 
-                    <!-- Corporate Account Section - Admin Selection -->
-                    <div class="form-section" data-aos="fade-up" data-aos-delay="300">
-                        <div class="corporate-header">
-                            <h3>Select Your Trading Admin From discord</h3>
-                            <p class="section-desc">Choose an expert trader to copy trades from</p>
-                            <span class="badge">Corporate Account</span>
+                    <!-- Learning Style -->
+                    <div class="form-section" data-aos="fade-up" data-aos-delay="250">
+                        <h3>How would you like to learn?</h3>
+                        <p class="section-desc">Select your preferred learning method</p>
+
+                        <div class="learning-grid">
+                            <div class="learning-item {{ old('learning_style') == 'video' ? 'selected' : '' }}" onclick="selectLearningStyle('video')">
+                                <input type="radio" name="learning_style" id="learn_video" value="video" class="form-check-input" {{ old('learning_style') == 'video' ? 'checked' : '' }} required>
+                                <div>
+                                    <strong>Video Tutorials</strong>
+                                    <p class="small text-muted mb-0">Learn through step-by-step video courses and market analysis</p>
+                                </div>
+                            </div>
+
+                            <div class="learning-item {{ old('learning_style') == 'webinar' ? 'selected' : '' }}" onclick="selectLearningStyle('webinar')">
+                                <input type="radio" name="learning_style" id="learn_webinar" value="webinar" class="form-check-input" {{ old('learning_style') == 'webinar' ? 'checked' : '' }}>
+                                <div>
+                                    <strong>Live Webinars</strong>
+                                    <p class="small text-muted mb-0">Interactive live sessions with expert traders and Q&A</p>
+                                </div>
+                            </div>
+
+                            <div class="learning-item {{ old('learning_style') == 'articles' ? 'selected' : '' }}" onclick="selectLearningStyle('articles')">
+                                <input type="radio" name="learning_style" id="learn_articles" value="articles" class="form-check-input" {{ old('learning_style') == 'articles' ? 'checked' : '' }}>
+                                <div>
+                                    <strong>Articles & Guides</strong>
+                                    <p class="small text-muted mb-0">In-depth written guides, strategies, and market analysis</p>
+                                </div>
+                            </div>
+
+                            <div class="learning-item {{ old('learning_style') == 'mentoring' ? 'selected' : '' }}" onclick="selectLearningStyle('mentoring')">
+                                <input type="radio" name="learning_style" id="learn_mentoring" value="mentoring" class="form-check-input" {{ old('learning_style') == 'mentoring' ? 'checked' : '' }}>
+                                <div>
+                                    <strong>One-on-One Mentoring</strong>
+                                    <p class="small text-muted mb-0">Personalized guidance and coaching from experienced traders</p>
+                                </div>
+                            </div>
+
+                            <div class="learning-item {{ old('learning_style') == 'community' ? 'selected' : '' }}" onclick="selectLearningStyle('community')">
+                                <input type="radio" name="learning_style" id="learn_community" value="community" class="form-check-input" {{ old('learning_style') == 'community' ? 'checked' : '' }}>
+                                <div>
+                                    <strong>Community Forums</strong>
+                                    <p class="small text-muted mb-0">Learn from peers, discuss strategies, and share experiences</p>
+                                </div>
+                            </div>
+
+                            <div class="learning-item {{ old('learning_style') == 'practice' ? 'selected' : '' }}" onclick="selectLearningStyle('practice')">
+                                <input type="radio" name="learning_style" id="learn_practice" value="practice" class="form-check-input" {{ old('learning_style') == 'practice' ? 'checked' : '' }}>
+                                <div>
+                                    <strong>Paper Trading</strong>
+                                    <p class="small text-muted mb-0">Practice trading with virtual money, no real risk</p>
+                                </div>
+                            </div>
+                        </div>
+                        @error('learning_style') <span class="text-danger small">{{ $message }}</span> @enderror
+                    </div>
+
+                    <!-- Account Type Selection -->
+                 
+<div class="account-card selected" id="corporateCard" onclick="selectAccountType()" style="background: white; border: 2px solid #8bc905; border-radius: 20px; padding: 10px; text-align: center; cursor: pointer; transition: all 0.3s ease; position: relative;">
+    
+    <!-- Add this click hint badge -->
+    <div style="position: absolute; top: -10px; right: 20px; background: #8bc905; color: #0C3A30; padding: 4px 12px; border-radius: 50px; font-size: 11px; font-weight: 600;">
+        <i class="fas fa-hand-point-right" style="margin-right: 5px;"></i> Click to Select
+    </div>
+                        <div class="row justify-content-center">
+                            <div class="col-lg-8">
+                                <input type="hidden" name="account_type" value="corporate">
+<div class="account-card selected" id="corporateCard" onclick="selectAccountType()" style="background: white;  border-radius: 20px; padding: 10px; text-align: center; cursor: pointer; transition: all 0.3s ease; ">
+    <style>
+        #corporateCard {
+    box-shadow: 0 8px 25px rgba(139, 201, 5, 0.25);
+}
+
+#corporateCard:hover {
+    box-shadow: 0 15px 35px rgba(139, 201, 5, 0.35);
+    transform: translateY(-3px);
+}
+    </style>
+
+
+
+                                    <div style="width: 60px; height: 60px; background: #8bc90515; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin: 15px auto;">
+                                        <i class="ri-user-star-line" style="font-size: 30px; color: #8bc905;"></i>
+                                    </div>
+
+                                    <h4 style="color: #0C3A30; font-weight: 700; margin: 10px 0 5px;">Managed Trading Account</h4>
+
+                                    <span style="background: #0C3A30; color: #8bc905; padding: 3px 10px; border-radius: 50px; font-size: 10px; font-weight: 600; display: inline-block;"> Expert Traders</span>
+
+                                    <div class="row mt-4">
+                                        <div class="col-md-6">
+                                            <p style="margin: 0 0 8px; font-size: 12px;"><i class="ri-checkbox-circle-line" style="color: #8bc905;"></i> Copy expert trades</p>
+                                            <p style="margin: 0; font-size: 12px;"><i class="ri-checkbox-circle-line" style="color: #8bc905;"></i> Advanced tools</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p style="margin: 0 0 8px; font-size: 12px;"><i class="ri-checkbox-circle-line" style="color: #8bc905;"></i> Real-time tracking</p>
+                                            <p style="margin: 0; font-size: 12px;"><i class="ri-checkbox-circle-line" style="color: #8bc905;"></i> 24/7 support</p>
+                                        </div>
+                                    </div>
+
+                                    <div style="height: 1px; background: #8bc90520; margin: 15px 0;"></div>
+
+                                    <div style="margin-top: 15px;">
+                                        <p style="font-size: 14px; color: #64748b; margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px;">
+                                            <i class="ri-bar-chart-2-line" style="color: #8bc905; font-size: 16px;"></i>
+                                            <span>Execute your own trading strategies with advanced tools and analysis features.</span>
+                                        </p>
+                                        <p style="font-size: 14px; color: #64748b; margin: 0; display: flex; align-items: center; gap: 8px;">
+                                            <i class="ri-file-copy-line" style="color: #8bc905; font-size: 16px;"></i>
+                                            <span>Automatically copy trades from successful Discord/Telegram community traders.</span>
+                                        </p>
+                                    </div>
+
+
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Admin Selection Area -->
-                        <div id="corporateAdminArea" class="admin-select-wrapper">
+                        <!-- Admin Selection Area (hidden by default, shows when card is clicked) -->
+                        <div id="corporateAdminArea" class="admin-select-wrapper mt-5" style="background: #f8fafc; border-radius: 20px; border: 1px solid #e2e8f0; padding: 24px; display: none;">
 
-                            <!-- Header with count and search -->
-                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 pb-2 gap-2" style="border-bottom: 1px dashed #e2e8f0;">
-                                <div class="d-flex align-items-center gap-2">
-                                    <h5 style="font-size: 14px; color: #0C3A30; font-weight: 600; margin: 0;">
+                            <!-- Header -->
+                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 pb-2 gap-3" style="border-bottom: 2px solid #8bc90520;">
+                                <div>
+                                    <h5 style="font-size: 16px; color: #0C3A30; font-weight: 700; margin: 0;">
                                         <i class="ri-user-star-line me-2" style="color: #8bc905;"></i>
-                                        Choose your admin from discord to copy trades
-                                        @if(isset($feeds) && $feeds->count() > 0)
-                                        <span class="badge rounded-pill" style="background: #8bc90520; color: #0C3A30; font-size: 11px; padding: 4px 10px;">
-                                            <span id="adminCount">{{ $feeds->count() }}</span> available
-                                        </span>
-                                        @endif
+                                        Select Your Trading Expert
                                     </h5>
+
                                 </div>
 
                                 <!-- Search Bar -->
-                                <div class="search-wrapper" style="position: relative; min-width: 250px;">
-                                    <i class="ri-search-line" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 14px;"></i>
+                                <div class="search-wrapper" style="position: relative; min-width: 260px;">
+                                    <i class="ri-search-line" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 14px;"></i>
                                     <input type="text"
                                         id="adminSearch"
-                                        class="form-control form-control-sm"
+                                        class="form-control"
                                         placeholder="Search by name or server..."
-                                        style="padding-left: 35px; height: 38px; border-radius: 20px; border: 1px solid #e2e8f0; background: #f8fafc; font-size: 13px;">
+                                        style="padding-left: 40px; height: 44px; border-radius: 12px; border: 1px solid #e2e8f0; background: white; font-size: 13px;">
                                     <button type="button"
                                         class="btn btn-sm"
                                         onclick="clearSearch()"
-                                        style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; padding: 0; display: none;"
+                                        style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; padding: 0; display: none;"
                                         id="clearSearchBtn">
                                         <i class="ri-close-line" style="font-size: 16px;"></i>
                                     </button>
                                 </div>
                             </div>
 
+                            <!-- Rest of your admin selection content remains the same -->
                             @if(isset($feeds) && $feeds->count() > 0)
                             <!-- Search Results Count -->
-                            <div id="searchResultsInfo" class="mb-2 px-1" style="display: none;">
-                                <small style="color: #64748b;">
-                                    Found <span id="resultsCount">0</span> matching admins
-                                </small>
+                            <div id="searchResultsInfo" class="mb-3 px-1" style="display: none;">
+                                <small style="color: #64748b;">Found <span id="resultsCount">0</span> matching traders</small>
                             </div>
 
-                            <!-- Admin List with Search Filter -->
-                            <div class="row g-3" style="max-height: 450px; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: #8bc905 #e2e8f0;" id="adminList">
+                            <!-- Stats Bar -->
+                            <div class="d-flex gap-3 mb-4 flex-wrap">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="ri-group-line" style="color: #8bc905;"></i>
+                                    <span style="font-size: 12px; color: #475569;"><span id="totalExperts">{{ $feeds->count() }}</span> Experts Available</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="ri-trophy-line" style="color: #8bc905;"></i>
+                                    <span style="font-size: 12px; color: #475569;">Verified Track Record</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="ri-shield-check-line" style="color: #8bc905;"></i>
+                                    <span style="font-size: 12px; color: #475569;">Funds Protected</span>
+                                </div>
+                            </div>
+
+                            <!-- Admin List -->
+                            <div class="row g-3" style="max-height: 420px; overflow-y: auto; padding-right: 6px;" id="adminList">
                                 @foreach($feeds as $feed)
                                 <div class="col-12 admin-item"
                                     data-admin-name="{{ strtolower($feed->admin_name) }}"
                                     data-server-name="{{ strtolower($feed->server_name) }}"
                                     data-profit="{{ $feed->profit_margin }}">
 
-                                    <div class="admin-option d-flex align-items-center p-3 rounded-3 w-100 {{ old('copy_admin_id') == $feed->id ? 'selected' : '' }}"
-                                        onclick="selectCorporateAdmin('{{ $feed->id }}', '{{ addslashes($feed->admin_name) }}', '{{ addslashes($feed->server_name) }}')"
+                                    <div class="admin-card d-flex align-items-start p-4 rounded-4 w-100 {{ old('copy_admin_id') == $feed->id ? 'selected' : '' }}"
+                                        onclick="selectCorporateAdmin('{{ $feed->id }}', '{{ $feed->admin_name }}', '{{ $feed->server_name }}')"
                                         style="background: {{ old('copy_admin_id') == $feed->id ? '#f0f9e8' : '#ffffff' }};
-                                                   border: 1px solid {{ old('copy_admin_id') == $feed->id ? '#8bc905' : '#edf2f7' }};
-                                                   transition: all 0.2s ease;
-                                                   cursor: pointer;">
+                           border: 2px solid {{ old('copy_admin_id') == $feed->id ? '#8bc905' : '#e2e8f0' }};
+                           transition: all 0.25s ease;
+                           cursor: pointer;
+                           margin-bottom: 12px;">
 
                                         <!-- Avatar -->
-                                        <div class="flex-shrink-0 me-3">
+                                        <div class="flex-shrink-0 me-4">
                                             @if($feed->admin_profile_image)
-                                            <div class="rounded-circle overflow-hidden border-2"
-                                                style="width: 50px; height: 50px; border-color: {{ old('copy_admin_id') == $feed->id ? '#8bc905' : '#e2e8f0' }};">
-                                                <img src="{{ asset('storage/admins/'.$feed->admin_profile_image) }}"
-                                                    class="w-100 h-100 object-fit-cover">
+                                            <div class="rounded-circle overflow-hidden" style="width: 60px; height: 60px; border: 3px solid {{ old('copy_admin_id') == $feed->id ? '#8bc905' : '#e2e8f0' }};">
+                                                <img src="{{ asset('uploads/admins/'.$feed->admin_profile_image) }}" style="width: 100%; height: 100%; object-fit: cover;">
                                             </div>
                                             @else
-                                            <div class="rounded-circle d-flex align-items-center justify-content-center"
-                                                style="width: 50px; height: 50px; background: #8bc90520; color: #0C3A30; border: 2px solid {{ old('copy_admin_id') == $feed->id ? '#8bc905' : '#e2e8f0' }};">
-                                                <span style="font-weight: 700; font-size: 18px;">
-                                                    {{ strtoupper(substr($feed->admin_name, 0, 1)) }}
-                                                </span>
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background: linear-gradient(135deg, #8bc90520, #8bc90510); color: #0C3A30; border: 3px solid {{ old('copy_admin_id') == $feed->id ? '#8bc905' : '#e2e8f0' }};">
+                                                <span style="font-weight: 700; font-size: 22px;">{{ strtoupper(substr($feed->admin_name, 0, 1)) }}</span>
                                             </div>
                                             @endif
                                         </div>
 
                                         <!-- Info -->
                                         <div class="flex-grow-1">
-                                            <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
-                                                <h6 style="font-size: 17px; font-weight: 700; color: #0C3A30; margin: 0;">
-                                                    {{ $feed->admin_name }}
-                                                </h6>
-
-                                                <span class="admin-server-badge ms-2"
-                                                    style="background: #8bc905; color: white; padding: 4px 10px; border-radius: 14px; font-size: 12px; font-weight: 600;">
-                                                Join
+                                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                                <div>
+                                                    <h5 style="font-size: 18px; font-weight: 700; color: #0C3A30; margin: 0;">{{ $feed->admin_name }}</h5>
+                                                    <span style="font-size: 13px; color: #64748b;"><i class="ri-server-line me-1"></i>{{ $feed->server_name }}</span>
+                                                </div>
+                                                <span style="background: #8bc905; color: #0C3A30; padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 700;">
+                                                    <i class="ri-user-add-line me-1"></i> Join
                                                 </span>
                                             </div>
 
-                                            <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
-                                                <span style="font-size: 14px; font-weight: 600; color: #1e293b;">
-                                                    <i class="ri-server-line me-1" style="font-size: 12px;"></i>
-                                                    {{ $feed->server_name }}
-                                                </span>
-
-                                                <!-- Profit Badge -->
-                                                <span class="profit-badge {{ $feed->profit_margin >= 0 ? 'positive' : 'negative' }}">
-                                                    <i class="ri-money-dollar-circle-line me-1"></i>
-                                                    Profit = ${{ number_format(abs($feed->profit_margin), 2) }}
-                                                </span>
+                                            <div class="d-flex flex-wrap gap-3 mb-3">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <i class="ri-user-line" style="color: #8bc905; font-size: 14px;"></i>
+                                                    <span style="font-size: 13px; color: #475569;"><strong>{{ number_format($feed->active_members) }}</strong> active</span>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <i class="ri-file-copy-line" style="color: #8bc905; font-size: 14px;"></i>
+                                                    <span style="font-size: 13px; color: #475569;"><strong>{{ number_format($feed->copying_trades ?? 0) }}</strong> copying</span>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <i class="ri-money-dollar-circle-line" style="color: {{ $feed->profit_margin >= 0 ? '#16a34a' : '#dc2626' }}; font-size: 14px;"></i>
+                                                    <span style="font-size: 13px; font-weight: 600; color: {{ $feed->profit_margin >= 0 ? '#16a34a' : '#dc2626' }};">${{ number_format(abs($feed->profit_margin), 2) }}</span>
+                                                </div>
                                             </div>
 
-                                            <div class="d-flex align-items-center gap-4 flex-wrap">
-                                                <small style="font-size: 12px; font-weight: 600; color: #475569;">
-                                                    <i class="ri-user-line text-black-50 me-1"></i>
-                                                    {{ number_format($feed->active_members) }} active
-                                                </small>
-
-                                                <small style="font-size: 12px; font-weight: 600; color: #475569;">
-                                                    <i class="ri-file-copy-line me-1"></i>
-                                                    {{ number_format($feed->copying_trades ?? 0) }} copying 
-                                                </small>
-
-                                                <!-- Win Rate Badge with Color Classes -->
-                                                @php
-                                                $winRate = $feed->win_rate ?? 0;
-                                                $winRateClass = 'low';
-                                                if ($winRate >= 70) {
-                                                $winRateClass = 'high';
-                                                } elseif ($winRate >= 50) {
-                                                $winRateClass = 'medium';
-                                                }
-                                                @endphp
-
-                                                <span class="win-rate-badge {{ $winRateClass }}">
-                                                    <i class="ri-trophy-line me-1"></i>
-                                                    win rate = {{ number_format($winRate, 1) }}%
-                                                </span>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div style="width: 100%; background: #e2e8f0; border-radius: 10px; height: 6px; max-width: 150px;">
+                                                    @php $winRate = $feed->win_rate ?? 0; @endphp
+                                                    <div style="width: {{ $winRate }}%; background: {{ $winRate >= 70 ? '#16a34a' : ($winRate >= 50 ? '#eab308' : '#dc2626') }}; height: 6px; border-radius: 10px;"></div>
+                                                </div>
+                                                <span style="font-size: 12px; font-weight: 600; color: {{ $winRate >= 70 ? '#16a34a' : ($winRate >= 50 ? '#eab308' : '#dc2626') }};"><i class="ri-trophy-line me-1"></i>{{ number_format($winRate, 1) }}% win rate</span>
                                             </div>
                                         </div>
+
+                                        @if(old('copy_admin_id') == $feed->id)
+                                        <div class="flex-shrink-0 ms-3">
+                                            <i class="ri-checkbox-circle-fill" style="color: #8bc905; font-size: 24px;"></i>
+                                        </div>
+                                        @endif
                                     </div>
                                 </div>
                                 @endforeach
@@ -796,27 +947,24 @@
                             <!-- No Results Message -->
                             <div id="noSearchResults" class="text-center py-5" style="display: none;">
                                 <div class="mb-3">
-                                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle"
-                                        style="width: 64px; height: 64px; background: #8bc90510;">
-                                        <i class="ri-search-line" style="color: #8bc905; font-size: 24px;"></i>
+                                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 70px; height: 70px; background: #8bc90510;">
+                                        <i class="ri-search-line" style="color: #8bc905; font-size: 28px;"></i>
                                     </div>
                                 </div>
-                                <p class="text-dark mb-1" style="font-size: 14px; font-weight: 500;">No matching admins found</p>
-                                <p class="text-muted" style="font-size: 12px;">Try adjusting your search terms</p>
-                                <button class="btn btn-sm mt-2" onclick="clearSearch()" style="background: #8bc905; color: white; border: none; padding: 6px 16px; border-radius: 20px;">
-                                    Clear Search
-                                </button>
+                                <p class="text-dark mb-1" style="font-size: 15px; font-weight: 500;">No matching traders found</p>
+                                <p class="text-muted" style="font-size: 13px;">Try adjusting your search terms</p>
+                                <button class="btn mt-2" onclick="clearSearch()" style="background: #8bc905; color: white; border: none; padding: 8px 20px; border-radius: 25px; font-size: 13px;">Clear Search</button>
                             </div>
 
                             <!-- Selected indicator -->
-                            <div class="mt-3 text-center" id="selectedAdminIndicator" style="display: none;">
-                                <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill" style="background: #8bc90510; border: 1px solid #8bc90530;">
-                                    <i class="ri-check-line" style="color: #8bc905; font-size: 14px;"></i>
-                                    <span style="font-size: 12px; color: #0C3A30;">Selected: <span id="selectedAdminName"></span></span>
+                            <div class="mt-4 text-center" id="selectedAdminIndicator" style="display: none;">
+                                <div class="d-inline-flex align-items-center gap-2 px-4 py-2 rounded-pill" style="background: #8bc90510; border: 1px solid #8bc90530;">
+                                    <i class="ri-check-line" style="color: #8bc905; font-size: 16px;"></i>
+                                    <span style="font-size: 13px; color: #0C3A30;">Selected Expert: <strong id="selectedAdminName"></strong></span>
                                 </div>
                             </div>
 
-                            <!-- Hidden inputs for corporate selection -->
+                            <!-- Hidden inputs -->
                             <input type="hidden" name="copy_admin_id" id="copy_admin_id" value="{{ old('copy_admin_id') }}">
                             <input type="hidden" name="copy_admin_name" id="copy_admin_name" value="{{ old('copy_admin_name') }}">
                             <input type="hidden" name="copy_server_name" id="copy_server_name" value="{{ old('copy_server_name') }}">
@@ -824,88 +972,47 @@
                             @else
                             <div class="text-center py-5">
                                 <div class="mb-3">
-                                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle"
-                                        style="width: 64px; height: 64px; background: #8bc90510;">
-                                        <i class="fa-solid fa-user-slash" style="color: #8bc905; font-size: 24px;"></i>
+                                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 70px; height: 70px; background: #8bc90510;">
+                                        <i class="ri-user-unfollow-line" style="color: #8bc905; font-size: 28px;"></i>
                                     </div>
                                 </div>
-                                <p class="text-dark mb-1" style="font-size: 14px; font-weight: 500;">No admins available yet</p>
-                                <p class="text-muted" style="font-size: 12px;">Check back later for available trading admins</p>
+                                <p class="text-dark mb-1" style="font-size: 15px; font-weight: 500;">No traders available yet</p>
+                                <p class="text-muted" style="font-size: 13px;">Check back later for available trading experts</p>
                             </div>
                             @endif
                         </div>
-                        @error('copy_admin_id') <span class="text-danger small">{{ $message }}</span> @enderror
+                        @error('account_type') <span class="text-danger small d-block mt-2 text-center">{{ $message }}</span> @enderror
                     </div>
 
                     <!-- Financial Information -->
                     <div class="form-section" data-aos="fade-up" data-aos-delay="400">
-                        <h3>Financial Information</h3>
-                        <p class="section-desc">This helps us personalize your experience</p>
+                        <h3>Trading Capital & Financial Information</h3>
+                        <p class="section-desc">This helps us customize your trading experience</p>
 
                         <div class="row">
-                           <div class="col-md-6 mb-3">
-    <label class="form-label fw-semibold">Investment Amount <span class="text-muted">($)</span></label>
-    <div class="d-flex gap-2">
-        <input type="number" name="investment_amount" id="investmentAmount" class="form-control" value="{{ old('investment_amount', 1000) }}" min="0" step="100" required style="flex: 1;">
-        <button type="button" id="quickAddBtn" class="btn btn-sm px-3" style="background: #8bc905; color: white; border-radius: 8px; white-space: nowrap;">
-            + Add $500
-        </button>
-    </div>
-    <small class="text-muted d-block mt-1">
-        <i class="fas fa-arrow-up text-success me-1"></i> add more / 
-        <i class="fas fa-arrow-down text-danger me-1"></i> reduce amount
-    </small>
-    @error('investment_amount') <span class="text-danger small">{{ $message }}</span> @enderror
-</div>
-
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold">Financial Alternative</label>
-                                <input type="text" name="financial_alternative" class="form-control" value="{{ old('financial_alternative', 'Pension') }}" placeholder="e.g., Pension, Savings">
-                                @error('financial_alternative') <span class="text-danger small">{{ $message }}</span> @enderror
+                                <label class="form-label fw-semibold">Initial Trading Capital <span class="text-muted">($)</span></label>
+                                <input type="number" name="investment_amount" class="form-control" value="{{ old('investment_amount', 1000) }}" min="0" step="100" required>
+                                @error('investment_amount') <span class="text-danger small">{{ $message }}</span> @enderror
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold">Annual Income</label>
-                                <select name="annual_income" class="form-control" required>
-                                    <option value="">Select income range</option>
-                                    <option value="0-14999" {{ old('annual_income') == '0-14999' ? 'selected' : '' }}>$0 - $14,999</option>
-                                    <option value="15000-49999" {{ old('annual_income') == '15000-49999' ? 'selected' : '' }}>$15,000 - $49,999</option>
-                                    <option value="50000-99999" {{ old('annual_income') == '50000-99999' ? 'selected' : '' }}>$50,000 - $99,999</option>
-                                    <option value="100000+" {{ old('annual_income') == '100000+' ? 'selected' : '' }}>$100,000+</option>
-                                </select>
-                                @error('annual_income') <span class="text-danger small">{{ $message }}</span> @enderror
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold">Source of Initial Deposit</label>
+                                <label class="form-label fw-semibold">Source of Trading Capital</label>
                                 <select name="deposit_source" class="form-control" required>
                                     <option value="">Select source</option>
-                                    <option value="savings" {{ old('deposit_source') == 'savings' ? 'selected' : '' }}>Savings</option>
-                                    <option value="pension" {{ old('deposit_source') == 'pension' ? 'selected' : '' }}>Pension</option>
+                                    <option value="savings" {{ old('deposit_source') == 'savings' ? 'selected' : '' }}>Personal Savings</option>
+                                    <option value="pension" {{ old('deposit_source') == 'pension' ? 'selected' : '' }}>Pension Funds</option>
                                     <option value="inheritance" {{ old('deposit_source') == 'inheritance' ? 'selected' : '' }}>Inheritance</option>
-                                    <option value="investment" {{ old('deposit_source') == 'investment' ? 'selected' : '' }}>Previous Investments</option>
+                                    <option value="investment" {{ old('deposit_source') == 'investment' ? 'selected' : '' }}>Previous Investment Returns</option>
                                     <option value="other" {{ old('deposit_source') == 'other' ? 'selected' : '' }}>Other</option>
                                 </select>
                                 @error('deposit_source') <span class="text-danger small">{{ $message }}</span> @enderror
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold">Source of Ongoing Deposits</label>
-                                <select name="ongoing_deposit_source" class="form-control" required>
-                                    <option value="">Select source</option>
-                                    <option value="income" {{ old('ongoing_deposit_source') == 'income' ? 'selected' : '' }}>Regular Income</option>
-                                    <option value="pension" {{ old('ongoing_deposit_source') == 'pension' ? 'selected' : '' }}>Pension</option>
-                                    <option value="business" {{ old('ongoing_deposit_source') == 'business' ? 'selected' : '' }}>Business Profits</option>
-                                    <option value="investments" {{ old('ongoing_deposit_source') == 'investments' ? 'selected' : '' }}>Investment Returns</option>
-                                    <option value="other" {{ old('ongoing_deposit_source') == 'other' ? 'selected' : '' }}>Other</option>
-                                </select>
-                                @error('ongoing_deposit_source') <span class="text-danger small">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>
 
                     <button type="submit" class="save-btn" id="submitBtn">
-                        <span class="btn-text">Complete  Registration</span>
+                        <span class="btn-text">Complete Profile & Finish Registration</span>
                         <span class="btn-loader hidden">
                             <i class="fas fa-spinner fa-spin"></i>
                         </span>
@@ -940,6 +1047,33 @@
         } else {
             element.classList.remove('selected');
         }
+    }
+
+    // Learning style selection
+    function selectLearningStyle(value) {
+        document.getElementById('learn_video').checked = (value === 'video');
+        document.getElementById('learn_webinar').checked = (value === 'webinar');
+        document.getElementById('learn_articles').checked = (value === 'articles');
+        document.getElementById('learn_mentoring').checked = (value === 'mentoring');
+        document.getElementById('learn_community').checked = (value === 'community');
+        document.getElementById('learn_practice').checked = (value === 'practice');
+
+        // Update UI
+        document.querySelectorAll('[onclick^="selectLearningStyle"]').forEach(card => {
+            card.classList.remove('selected');
+        });
+        event.currentTarget.classList.add('selected');
+    }
+
+    // Account type selection
+    // Account type is always corporate
+    function selectAccountType() {
+        // Always show admin area
+        const adminArea = document.getElementById('corporateAdminArea');
+        adminArea.classList.remove('hidden');
+        setTimeout(() => {
+            initializeSearch();
+        }, 100);
     }
 
     // Corporate admin selection
@@ -1083,7 +1217,21 @@
             }
         }
     }
-
+    // Account type selection - shows admin area when card is clicked
+    function selectAccountType() {
+        const adminArea = document.getElementById('corporateAdminArea');
+        if (adminArea) {
+            adminArea.style.display = 'block';
+            // Scroll to it smoothly
+            adminArea.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+            setTimeout(() => {
+                initializeSearch();
+            }, 100);
+        }
+    }
     // Form submission loader
     document.getElementById('additionalInfoForm')?.addEventListener('submit', function() {
         const btn = document.getElementById('submitBtn');
@@ -1110,44 +1258,39 @@
             }
         });
 
-        // Initialize search
-        setTimeout(() => {
-            initializeSearch();
-        }, 100);
+        // Check if corporate was previously selected
+        const accountType = document.querySelector('input[name="account_type"]:checked')?.value;
+        if (accountType === 'corporate') {
+            document.getElementById('corporateAdminArea')?.classList.remove('hidden');
 
-        // Check for previously selected admin
-        const copyAdminId = document.getElementById('copy_admin_id').value;
-        if (copyAdminId) {
-            document.querySelectorAll('.admin-option').forEach(option => {
-                if (option.getAttribute('onclick')?.includes(`'${copyAdminId}'`)) {
-                    option.classList.add('selected');
-                    option.style.background = '#f0f9e8';
-                    option.style.borderColor = '#8bc905';
+            setTimeout(() => {
+                initializeSearch();
+            }, 100);
 
-                    const adminName = document.getElementById('copy_admin_name').value;
-                    if (adminName) {
-                        const indicator = document.getElementById('selectedAdminIndicator');
-                        const selectedNameSpan = document.getElementById('selectedAdminName');
-                        if (indicator && selectedNameSpan) {
-                            selectedNameSpan.textContent = adminName;
-                            indicator.style.display = 'block';
+            const copyAdminId = document.getElementById('copy_admin_id').value;
+            if (copyAdminId) {
+                document.querySelectorAll('.admin-option').forEach(option => {
+                    if (option.getAttribute('onclick')?.includes(`'${copyAdminId}'`)) {
+                        option.classList.add('selected');
+                        option.style.background = '#f0f9e8';
+                        option.style.borderColor = '#8bc905';
+
+                        const adminName = document.getElementById('copy_admin_name').value;
+                        if (adminName) {
+                            const indicator = document.getElementById('selectedAdminIndicator');
+                            const selectedNameSpan = document.getElementById('selectedAdminName');
+                            if (indicator && selectedNameSpan) {
+                                selectedNameSpan.textContent = adminName;
+                                indicator.style.display = 'block';
+                            }
                         }
                     }
-                }
-            });
+                });
+            }
+        } else {
+            initializeSearch();
         }
     });
-
-    // Quick add button
-const quickAddBtn = document.getElementById('quickAddBtn');
-const investmentInput = document.getElementById('investmentAmount');
-
-if (quickAddBtn && investmentInput) {
-    quickAddBtn.addEventListener('click', function() {
-        let currentValue = parseInt(investmentInput.value) || 0;
-        investmentInput.value = currentValue + 500;
-    });
-}
 </script>
 
 <style>
