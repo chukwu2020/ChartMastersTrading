@@ -252,7 +252,8 @@ class UserController extends Controller
                
                 'learning_style' => $request->learning_style,  
                 'deposit_source' => $request->deposit_source,
-               
+                 'annual_income' => $request->annual_income ?? null,
+                'ongoing_deposit_source' => $request->ongoing_deposit_source ?? null,
 
             ]);
 
