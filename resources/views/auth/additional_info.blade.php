@@ -889,8 +889,13 @@
                                         <div class="flex-shrink-0 me-4">
                                             @if($feed->admin_profile_image)
                                             <div class="rounded-circle overflow-hidden" style="width: 60px; height: 60px; border: 3px solid {{ old('copy_admin_id') == $feed->id ? '#8bc905' : '#e2e8f0' }};">
-                                                <img src="{{ asset('uploads/admins/'.$feed->admin_profile_image) }}" style="width: 100%; height: 100%; object-fit: cover;">
+
+                                           
+                                                <img src="{{ asset('storage/servers/'$feed->admin_profile_image) }}" style="width: 100%; height: 100%; object-fit: cover;">
+
+
                                             </div>
+
                                             @else
                                             <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background: linear-gradient(135deg, #8bc90520, #8bc90510); color: #0C3A30; border: 3px solid {{ old('copy_admin_id') == $feed->id ? '#8bc905' : '#e2e8f0' }};">
                                                 <span style="font-weight: 700; font-size: 22px;">{{ strtoupper(substr($feed->admin_name, 0, 1)) }}</span>
