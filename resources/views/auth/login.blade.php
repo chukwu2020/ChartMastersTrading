@@ -411,7 +411,14 @@
                         {{ session('error') }}
                     </div>
                 @endif
-                
+                <!-- Add this after the existing alert messages -->
+@if(session('warning'))
+    <div class="alert alert-warning alert-dismissible fade show" role="alert" style="background: #fff3cd; border: 1px solid #ffeeba; color: #856404;">
+        <i class="ri-information-line me-2"></i>
+        {{ session('warning') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
                 <!-- Login Form -->
                 <form action="{{ route('login') }}" method="POST" class="login-form">
                     @csrf

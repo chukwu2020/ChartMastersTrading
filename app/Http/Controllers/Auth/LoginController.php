@@ -54,45 +54,52 @@ class LoginController extends Controller
     /**
      * Handle what happens after successful authentication.
      */
- protected function authenticated(Request $request, $user)
-{
-    $today = now()->toDateString();
+    protected function authenticated(Request $request, $user)
+    {
+        // 🔒 Check if user needs to complete registration (Step 2)
+        if ($user->registration_step < 2 || $user->account_status === 'pending') {
+            // Store user ID in session for the additional info page
+            session()->put('registration_user_id', $user->id);
+            
+            // Logout the user
+            Auth::logout();
+            
+            // ✅ DO NOT invalidate the entire session - just logout auth
+            // The session still exists with our registration_user_id
+            
+            // Redirect to additional info page with a clear message
+            return redirect()->route('user.additional.info')
+                ->with('warning', 'Please complete your trading profile to activate your account.');
+        }
 
-    if (session('overlayDate') !== $today) {
-        session([
-            'overlayDate' => $today,
-            'overlayCount' => 0,
-        ]);
+        // ✅ User is fully registered - proceed with normal login flow
+        $today = now()->toDateString();
+
+        if (session('overlayDate') !== $today) {
+            session([
+                'overlayDate' => $today,
+                'overlayCount' => 0,
+            ]);
+        }
+
+        $overlayCount = session('overlayCount', 0);
+
+        if ($overlayCount < 2 && !session()->has('overlayShownThisLogin')) {
+            session([
+                'showTradingOverlay' => true,
+                'overlayShowAt' => now()->addSeconds(40)->timestamp,
+                'overlayCount' => $overlayCount + 1,
+                'overlayShownThisLogin' => true,
+            ]);
+        } else {
+            session()->forget('showTradingOverlay');
+        }
+
+        // ✅ Allow valid users
+        return redirect()->route(
+            $user->role_as == 1 ? 'admin_dashboard' : 'user_dashboard'
+        );
     }
-
-    $overlayCount = session('overlayCount', 0);
-
-    if ($overlayCount < 2 && !session()->has('overlayShownThisLogin')) {
-        session([
-            'showTradingOverlay' => true,
-            'overlayShowAt' => now()->addSeconds(40)->timestamp,
-            'overlayCount' => $overlayCount + 1,
-            'overlayShownThisLogin' => true,
-        ]);
-    } else {
-        session()->forget('showTradingOverlay');
-    }
-
-    // 🔒 Block incomplete users
-    if ($user->registration_step < 2 || $user->account_status !== 'active') {
-        Auth::logout();
-
-        return redirect()->route('login')->withErrors([
-            'email' => 'You must complete registration before logging in.'
-        ]);
-    }
-
-    // ✅ Allow valid users
-    return redirect()->route(
-        $user->role_as == 1 ? 'admin_dashboard' : 'user_dashboard'
-    );
-}
-
 
     /**
      * Create a new controller instance.

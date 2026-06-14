@@ -102,10 +102,10 @@ class UserController extends Controller
 
             'referral_id' => 'nullable',
 
-           
+
 
             'join_source' => 'required|string|in:discord,telegram,other',
-'join_source_other' => 'required_if:join_source,other|nullable|string|max:255',
+            'join_source_other' => 'required_if:join_source,other|nullable|string|max:255',
 
             'copy_preference' => 'nullable|string',
             'copy_admin_id' => 'nullable|integer|required_if:copy_preference,specific_admin',
@@ -170,140 +170,167 @@ class UserController extends Controller
     /**
      * Show additional info form (Step 2)
      */
-    public function showAdditionalInfo()
-    {
-        $userId = session('registration_user_id');
-        if (!$userId) {
-            return redirect()->route('signup');
-        }
+    /**
+     * Show additional info form (Step 2)
+     */
+  /**
+ * Show additional info form (Step 2)
+ */
+/**
+ * Show additional info form (Step 2)
+ */
+public function showAdditionalInfo()
+{
+    // Check if user ID exists in session (from login or registration)
+    $userId = session('registration_user_id');
+    
+    // Add debug logging
+    \Log::info('Additional Info Page - Session User ID: ' . ($userId ?? 'null'));
 
-        $user = User::find($userId);
-        if (!$user) {
-            return redirect()->route('signup');
-        }
-
-        // Get feeds for corporate admin selection
-        $feeds = ServerFeed::latest()->get();
-
-        return view('auth.additional_info', compact('user', 'feeds')); // ✅ Fixed path
+    if (!$userId) {
+        // No user ID in session, redirect to signup
+        return redirect()->route('signup')->with('error', 'Please start your registration process.');
     }
 
-  
+    $user = User::find($userId);
+
+    if (!$user) {
+        session()->forget('registration_user_id');
+        return redirect()->route('signup')->with('error', 'User not found. Please register again.');
+    }
+
+    // Check if user already completed step 2
+    if ($user->registration_step >= 2 && $user->account_status === 'active') {
+        // User is already fully registered, clear session and redirect to login
+        session()->forget('registration_user_id');
+        return redirect()->route('login')->with('info', 'Your account is already active. Please login.');
+    }
+
+    // Get feeds for corporate admin selection
+    $feeds = ServerFeed::latest()->get();
+
+    return view('auth.additional_info', compact('user', 'feeds'));
+}
+
     /**
      * Save additional trading info (Step 2 submission)
      */
-  public function saveAdditionalInfo(Request $request)
-    {
-        $userId = session('registration_user_id');
-        if (!$userId) {
-            return redirect()->route('signup');
-        }
+/**
+ * Save additional trading info (Step 2 submission)
+ */
+public function saveAdditionalInfo(Request $request)
+{
+    $userId = session('registration_user_id');
+    
+    if (!$userId) {
+        return redirect()->route('signup')->with('error', 'Session expired. Please register again.');
+    }
 
-        $user = User::find($userId);
-        if (!$user) {
-            return redirect()->route('signup');
-        }
+    $user = User::find($userId);
+    
+    if (!$user) {
+        session()->forget('registration_user_id');
+        return redirect()->route('signup')->with('error', 'User not found. Please register again.');
+    }
 
-        $request->validate([
-            // Trading experience questions (Page 2)
-            'stock_experience' => 'required|in:yes,no,novice',
-            'trading_frequency' => 'required|string',
-            'transaction_volume' => 'required|string',
+    // Check if already completed (prevent double submission)
+    if ($user->registration_step >= 2 && $user->account_status === 'active') {
+        session()->forget('registration_user_id');
+        return redirect()->route('login')->with('info', 'Account already active. Please login.');
+    }
 
-            // Investment goals (Page 3)
-            'investment_goal' => 'required|array',
-            'investment_goal.*' => 'string',
+    $request->validate([
+        // Trading experience questions (Page 2)
+        'stock_experience' => 'required|in:yes,no,novice',
+        'trading_frequency' => 'required|string',
+        'transaction_volume' => 'required|string',
 
-            // Asset classes (Page 5)
-            'asset_classes' => 'required|array',
-            'asset_classes.*' => 'string',
+        // Investment goals (Page 3)
+        'investment_goal' => 'required|array',
+        'investment_goal.*' => 'string',
 
-            // Account type selection (Page 6 - CRITICAL)
-          
-            'account_type' => 'required|in:corporate',  
+        // Asset classes (Page 5)
+        'asset_classes' => 'required|array',
+        'asset_classes.*' => 'string',
 
-            // If corporate, require admin selection
-            'copy_admin_id' => 'required_if:account_type,corporate|nullable|integer',
-            'copy_admin_name' => 'required_if:account_type,corporate|nullable|string',
-            'copy_server_name' => 'required_if:account_type,corporate|nullable|string',
+        // Account type selection (Page 6 - CRITICAL)
+        'account_type' => 'required|in:corporate',  
 
-            // Financial info (Page 7)
-            'investment_amount' => 'required|numeric|min:0',
-           'learning_style' => 'required|string',
-            'deposit_source' => 'required|string',
-          
+        // If corporate, require admin selection
+        'copy_admin_id' => 'required_if:account_type,corporate|nullable|integer',
+        'copy_admin_name' => 'required_if:account_type,corporate|nullable|string',
+        'copy_server_name' => 'required_if:account_type,corporate|nullable|string',
+
+        // Financial info (Page 7)
+        'investment_amount' => 'required|numeric|min:0',
+        'learning_style' => 'required|string',
+        'deposit_source' => 'required|string',
+    ]);
+
+    DB::beginTransaction();
+    try {
+        // Create trading info record
+        UserTradingInfo::create([
+            'user_id' => $user->id,
+            'stock_experience' => $request->stock_experience,
+            'trading_frequency' => $request->trading_frequency,
+            'transaction_volume' => $request->transaction_volume,
+            'investment_goals' => json_encode($request->investment_goal),
+            'asset_classes' => json_encode($request->asset_classes),
+            'account_type' => $request->account_type,
+            'copy_admin_id' => $request->copy_admin_id,
+            'copy_admin_name' => $request->copy_admin_name,
+            'copy_server_name' => $request->copy_server_name,
+            'investment_amount' => $request->investment_amount,
+            'learning_style' => $request->learning_style,  
+            'deposit_source' => $request->deposit_source,
+            'annual_income' => $request->annual_income ?? null,
+            'ongoing_deposit_source' => $request->ongoing_deposit_source ?? null,
         ]);
 
-        DB::beginTransaction();
-        try {
-            // Create trading info record
-            UserTradingInfo::create([
-                'user_id' => $user->id,
-                'stock_experience' => $request->stock_experience,
-                'trading_frequency' => $request->trading_frequency,
-                'transaction_volume' => $request->transaction_volume,
-                'investment_goals' => json_encode($request->investment_goal),
-                'asset_classes' => json_encode($request->asset_classes),
-                'account_type' => $request->account_type,
-                'copy_admin_id' => $request->copy_admin_id,
-                'copy_admin_name' => $request->copy_admin_name,
-                'copy_server_name' => $request->copy_server_name,
-                'investment_amount' => $request->investment_amount,
-               
-                'learning_style' => $request->learning_style,  
-                'deposit_source' => $request->deposit_source,
-                 'annual_income' => $request->annual_income ?? null,
-                'ongoing_deposit_source' => $request->ongoing_deposit_source ?? null,
-
-            ]);
-
-            // If corporate account, update user with copy admin info
         // Always corporate account - update user with copy admin info
-$user->update([
-    'copy_preference' => 'specific_admin',
-    'copy_admin_id' => $request->copy_admin_id,
-    'copy_admin_name' => $request->copy_admin_name,
-    'copy_server_name' => $request->copy_server_name,
-]);
+        $user->update([
+            'copy_preference' => 'specific_admin',
+            'copy_admin_id' => $request->copy_admin_id,
+            'copy_admin_name' => $request->copy_admin_name,
+            'copy_server_name' => $request->copy_server_name,
+            'account_status' => 'active',
+            'registration_step' => 2, // Step 2 complete
+        ]);
 
-            // Update user status
-            $user->update([
-                'account_status' => 'active',
-                'registration_step' => 2, // Step 2 complete
-            ]);
+        DB::commit();
 
-            DB::commit();
+        // Send welcome notification with email
+        $user->notify(new WelcomeNotification(
+            $user->name,
+            $user->email,
+            $request->account_type,
+            $request->copy_admin_name ?? null
+        ));
 
-            // Clear session
-            session()->forget('registration_user_id');
+        // Clear session
+        session()->forget('registration_user_id');
 
-            // Send welcome notification with email
-            $user->notify(new WelcomeNotification(
-                $user->name,
-                $user->email,
-                $request->account_type,
-                $request->copy_admin_name ?? null
-            ));
+        // 🔐 AUTO LOGIN THE USER
+        Auth::login($user);
 
-            // 🔐 AUTO LOGIN THE USER
-            Auth::login($user);
+        // Set session for overlay if needed
+        $today = now()->toDateString();
+        session([
+            'overlayDate' => $today,
+            'overlayCount' => 0,
+            'showTradingOverlay' => true,
+            'overlayShowAt' => now()->addSeconds(40)->timestamp,
+        ]);
 
-            // Set session for overlay if needed
-            $today = now()->toDateString();
-            session([
-                'overlayDate' => $today,
-                'overlayCount' => 0,
-                'showTradingOverlay' => true,
-                'overlayShowAt' => now()->addSeconds(40)->timestamp,
-            ]);
-
-            // Redirect to dashboard instead of registration complete page
-            return redirect()->route('user_dashboard')->with('success', 'Welcome! Your account is fully set up.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Failed to save information: ' . $e->getMessage())->withInput();
-        }
+        // Redirect to dashboard with success message
+        return redirect()->route('user_dashboard')->with('success', 'Welcome! Your account is fully set up.');
+        
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()->with('error', 'Failed to save information: ' . $e->getMessage())->withInput();
     }
+}
 
 
     /**
@@ -328,189 +355,190 @@ $user->update([
 
 
     public function changeAdmin(Request $request)
-{
-    $request->validate([
-        'admin_id' => 'required|exists:server_feeds,id'
-    ]);
+    {
+        $request->validate([
+            'admin_id' => 'required|exists:server_feeds,id'
+        ]);
 
-    $user = auth()->user();
+        $user = auth()->user();
 
-    $admin = ServerFeed::findOrFail($request->admin_id);
+        $admin = ServerFeed::findOrFail($request->admin_id);
 
-    $user->update([
-        'copy_admin_id' => $admin->id,
-        'copy_admin_name' => $admin->admin_name,
-        'copy_server_name' => $admin->server_name,
-        'copy_preference' => 'specific_admin',
-    ]);
+        $user->update([
+            'copy_admin_id' => $admin->id,
+            'copy_admin_name' => $admin->admin_name,
+            'copy_server_name' => $admin->server_name,
+            'copy_preference' => 'specific_admin',
+        ]);
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Admin updated successfully'
-    ]);
-}
-
-
-    
-    // ... rest of your existing methods remain exactly the same ...
-    public function user_dashboard()
-{
-    $user = auth()->user();
-
-    // ✅ BEST PRACTICE: Use accessor from User model
-    $totalInvested = $user->amount_invested;
-
-    $cardExists = WithdrawalCard::where('user_id', $user->id)->exists();
-    $verification = $user->idverification;
-    $feeds = ServerFeed::latest()->get();
-
-    if ($user->registration_step < 2 || $user->account_status !== 'active') {
-        Auth::logout();
-        return redirect()->route('login')->withErrors([
-            'email' => 'You must complete registration before logging in.'
+        return response()->json([
+            'success' => true,
+            'message' => 'Admin updated successfully'
         ]);
     }
 
-    // Deposits
-    $deposits = Deposit::where('user_id', $user->id)
-        ->latest()
-        ->take(5)
-        ->get()
-        ->map(function ($deposit) {
-            return [
-                'type' => 'Deposit',
-                'amount' => $deposit->amount_deposited,
-                'status' => $deposit->status ? 'Completed' : 'Pending',
-                'date' => $deposit->created_at,
-                'reference' => 'DEP-' . $deposit->id,
-                'icon' => 'bank-transfer-in',
+
+
+    // ... rest of your existing methods remain exactly the same ...
+    public function user_dashboard()
+    {
+        $user = auth()->user();
+
+        // ✅ BEST PRACTICE: Use accessor from User model
+        $totalInvested = $user->amount_invested;
+
+        $cardExists = WithdrawalCard::where('user_id', $user->id)->exists();
+        $verification = $user->idverification;
+        $feeds = ServerFeed::latest()->get();
+
+        if ($user->registration_step < 2 || $user->account_status !== 'active') {
+            Auth::logout();
+            return redirect()->route('login')->withErrors([
+                'email' => 'You must complete registration before logging in.'
+            ]);
+        }
+
+        // Deposits
+        $deposits = Deposit::where('user_id', $user->id)
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function ($deposit) {
+                return [
+                    'type' => 'Deposit',
+                    'amount' => $deposit->amount_deposited,
+                    'status' => $deposit->status ? 'Completed' : 'Pending',
+                    'date' => $deposit->created_at,
+                    'reference' => 'DEP-' . $deposit->id,
+                    'icon' => 'bank-transfer-in',
+                    'action_url' => null,
+                    'action_text' => null
+                ];
+            });
+
+        // Withdrawals
+        $withdrawals = Withdrawal::where('user_id', $user->id)
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function ($withdrawal) {
+                return [
+                    'type' => 'Withdrawal',
+                    'amount' => $withdrawal->amount,
+                    'status' => match ($withdrawal->status) {
+                        'pending' => 'Pending',
+                        'completed' => 'Completed',
+                        'rejected' => 'Rejected',
+                        default => ucfirst($withdrawal->status),
+                    },
+                    'date' => $withdrawal->created_at,
+                    'reference' => 'WD-' . $withdrawal->id,
+                    'icon' => 'bank-transfer-out',
+                    'action_url' => null,
+                    'action_text' => null
+                ];
+            });
+
+        // Copy Trading Requests
+        $copyRequests = CopyTradingRequest::with('plan')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->take(10)
+            ->get();
+
+        $copyActivities = [];
+
+        foreach ($copyRequests as $req) {
+            $copyActivities[] = [
+                'type' => 'Copy Trading',
+                'icon' => 'copy',
+                'amount' => $req->amount ?? 0,
+                'status' => $req->status,
+                'date' => $req->created_at,
+                'reference' => 'CT-' . $req->id,
+                'plan_name' => $req->plan->name ?? 'N/A',
                 'action_url' => null,
-                'action_text' => null
+                'action_text' => null,
             ];
-        });
+        }
 
-    // Withdrawals
-    $withdrawals = Withdrawal::where('user_id', $user->id)
-        ->latest()
-        ->take(5)
-        ->get()
-        ->map(function ($withdrawal) {
+        // Active Investments
+        $allInvestments = $user->investments()
+            ->where('status', 'active')
+            ->with('plan')
+            ->get();
+
+        $activeInvestments = $allInvestments->take(5)->map(function ($investment) {
             return [
-                'type' => 'Withdrawal',
-                'amount' => $withdrawal->amount,
-                'status' => match ($withdrawal->status) {
-                    'pending' => 'Pending',
-                    'completed' => 'Completed',
-                    'rejected' => 'Rejected',
-                    default => ucfirst($withdrawal->status),
-                },
-                'date' => $withdrawal->created_at,
-                'reference' => 'WD-' . $withdrawal->id,
-                'icon' => 'bank-transfer-out',
-                'action_url' => null,
-                'action_text' => null
-            ];
-        });
-
-    // Copy Trading Requests
-    $copyRequests = CopyTradingRequest::with('plan')
-        ->where('user_id', $user->id)
-        ->latest()
-        ->take(10)
-        ->get();
-
-    $copyActivities = [];
-
-    foreach ($copyRequests as $req) {
-        $copyActivities[] = [
-            'type' => 'Copy Trading',
-            'icon' => 'copy',
-            'amount' => $req->amount ?? 0,
-            'status' => $req->status,
-            'date' => $req->created_at,
-            'reference' => 'CT-' . $req->id,
-            'plan_name' => $req->plan->name ?? 'N/A',
-            'action_url' => null,
-            'action_text' => null,
-        ];
-    }
-
-    // Active Investments
-    $allInvestments = $user->investments()
-        ->where('status', 'active')
-        ->with('plan')
-        ->get();
-
-    $activeInvestments = $allInvestments->take(5)->map(function ($investment) {
-        return [
-            'type' => 'Investment Active',
-            'amount' => $investment->amount_invested,
-            'status' => 'Active',
-            'date' => $investment->created_at,
-            'reference' => 'INV-' . $investment->id,
-            'icon' => 'chart-line',
-            'plan_name' => $investment->plan->name ?? 'N/A',
-            'action_url' => null,
-            'action_text' => null
-        ];
-    });
-
-    // Matured Investments
-    $maturedInvestments = Investment::with('plan')
-        ->where('user_id', $user->id)
-        ->where('status', 'completed')
-        ->latest()
-        ->get()
-        ->filter(fn($inv) => $inv->is_withdrawable)
-        ->take(5)
-        ->map(function ($investment) {
-            return [
-                'type' => 'Investment Matured',
-                'amount' => $investment->amount_invested + $investment->total_profit,
-                'status' => 'Ready to Withdraw',
-                'date' => $investment->updated_at,
-                'reference' => 'MAT-' . $investment->id,
-                'icon' => 'cash-check',
+                'type' => 'Investment Active',
+                'amount' => $investment->amount_invested,
+                'status' => 'Active',
+                'date' => $investment->created_at,
+                'reference' => 'INV-' . $investment->id,
+                'icon' => 'chart-line',
                 'plan_name' => $investment->plan->name ?? 'N/A',
-                'action_url' => route('investments.withdraw', $investment->id),
-                'action_text' => 'Withdraw Now'
+                'action_url' => null,
+                'action_text' => null
             ];
         });
 
-    // Combine Activities
-    $recentActivities = collect()
-        ->merge($deposits)
-        ->merge($withdrawals)
-        ->merge($activeInvestments)
-        ->merge($maturedInvestments)
-        ->merge($copyActivities)
-        ->sortByDesc('date')
-        ->take(10);
+        // Matured Investments
+        $maturedInvestments = Investment::with('plan')
+            ->where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->latest()
+            ->get()
+            ->filter(fn($inv) => $inv->is_withdrawable)
+            ->take(5)
+            ->map(function ($investment) {
+                return [
+                    'type' => 'Investment Matured',
+                    'amount' => $investment->amount_invested + $investment->total_profit,
+                    'status' => 'Ready to Withdraw',
+                    'date' => $investment->updated_at,
+                    'reference' => 'MAT-' . $investment->id,
+                    'icon' => 'cash-check',
+                    'plan_name' => $investment->plan->name ?? 'N/A',
+                    'action_url' => route('investments.withdraw', $investment->id),
+                    'action_text' => 'Withdraw Now'
+                ];
+            });
 
-    if (session('certShowAt') && session('certShowAt') < now()->timestamp) {
-        session()->forget('certShowAt');
+        // Combine Activities
+        $recentActivities = collect()
+            ->merge($deposits)
+            ->merge($withdrawals)
+            ->merge($activeInvestments)
+            ->merge($maturedInvestments)
+            ->merge($copyActivities)
+            ->sortByDesc('date')
+            ->take(10);
+
+        if (session('certShowAt') && session('certShowAt') < now()->timestamp) {
+            session()->forget('certShowAt');
+        }
+
+        $overlayCountToday = session('overlayCountToday', 0);
+
+        return view('dashboard.index', compact(
+            'user',
+            'cardExists',
+            'totalInvested',
+            'recentActivities',
+            'overlayCountToday',
+            'allInvestments',
+            'verification',
+            'feeds'
+        ));
     }
 
-    $overlayCountToday = session('overlayCountToday', 0);
 
-    return view('dashboard.index', compact(
-        'user',
-        'cardExists',
-        'totalInvested',
-        'recentActivities',
-        'overlayCountToday',
-        'allInvestments',
-        'verification',
-        'feeds'
-    ));
-}
+    // user psychology
 
-
-// user psychology
-
-public function psychology(){
-    return view('dashboard.user.psychology');
-}
+    public function psychology()
+    {
+        return view('dashboard.user.psychology');
+    }
     public function hideOverlay(Request $request)
     {
         // Mark overlay as closed for this user/session
@@ -786,14 +814,14 @@ public function psychology(){
 
     public function lockedPage()
     {
-  $user = auth()->user();
+        $user = auth()->user();
 
-$copyAdmin = \App\Models\ServerFeed::find($user->copy_admin_id);
+        $copyAdmin = \App\Models\ServerFeed::find($user->copy_admin_id);
 
- return view('dashboard.lockedpage', compact(
-    'user',
-    'copyAdmin'
-));
+        return view('dashboard.lockedpage', compact(
+            'user',
+            'copyAdmin'
+        ));
     }
 
 
@@ -948,16 +976,14 @@ $copyAdmin = \App\Models\ServerFeed::find($user->copy_admin_id);
 
     // user dashboard payouts
 
-    public function dashboardpayouts() {  
-    
+    public function dashboardpayouts()
+    {
+
         $payouts = Payout::with('plan')
             ->orderBy('pay_date', 'desc')
             ->orderBy('id', 'desc')
             ->paginate(10);
 
         return view('dashboard.user.payouts', compact('payouts'));
-}
-
-
-
+    }
 }
