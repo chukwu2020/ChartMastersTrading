@@ -71,6 +71,7 @@ class InvestmentController extends Controller
                 ->first();
 
             // ── Total profit for this investment ──────────────────────
+
             $totalProfit = ($investment->amount_invested * $investment->plan->interest_rate) / 100;
 
             // Profit already paid out via take-profit withdrawals
@@ -82,6 +83,7 @@ class InvestmentController extends Controller
             $remainingProfit = max($totalProfit - $alreadyTakenProfit, 0);
 
             // ── Fee calculation on remaining profit ───────────────────
+
             $managementFeePercent  = floatval($investment->plan->management_fee  ?? 0);
             $performanceFeePercent = floatval($investment->plan->performance_fee ?? 0);
 
@@ -104,10 +106,12 @@ class InvestmentController extends Controller
             $netAmount = max($netAmount, (float) $investment->amount_invested); // safety floor
 
             // ── Credit user ───────────────────────────────────────────
+
             $user->available_balance += $netAmount;
             $user->save();
 
             // ── Update investment fee tracking ────────────────────────
+
             $investment->update([
                 'status'                   => 'withdrawn',
                 'withdrawn_at'             => now(),
@@ -117,6 +121,7 @@ class InvestmentController extends Controller
             ]);
 
             // ── Record the withdrawal ─────────────────────────────────
+
             Withdrawal::create([
                 'user_id'         => $user->id,
                 'investment_id'   => $investment->id,
@@ -148,6 +153,7 @@ class InvestmentController extends Controller
                     number_format($totalFees, 2),
                     number_format($netAmount, 2)
                 ));
+
         });
     }
 
@@ -182,6 +188,7 @@ class InvestmentController extends Controller
                 ->first();
 
             // ── Calculate earned profit so far ────────────────────────
+
             // progress_percentage is 0–100. We divide by 100 to get a fraction.
             $progress            = max(min($investment->progress_percentage, 100), 0) / 100;
             $totalExpectedProfit = ($investment->amount_invested * $investment->plan->interest_rate) / 100;
@@ -196,9 +203,10 @@ class InvestmentController extends Controller
             $availableProfit = max($earnedProfit - $alreadyTakenProfit, 0);
 
             // ── Take-profit cap ───────────────────────────────────────
-            // Users can take a maximum of $50 (or $100 for investments >= $12,000) in profit
+
+            // Users can take a maximum of $30 (or $10 for investments < $12,000) in profit
             // before the investment completes. This is the RAW profit cap (pre-fee).
-            $maxAllowed     = $investment->amount_invested >= 12000 ? 100 : 50;
+            $maxAllowed     = $investment->amount_invested >= 12000 ? 30 : 10;
             $remainingLimit = max($maxAllowed - $alreadyTakenProfit, 0);
 
             if ($alreadyTakenProfit >= $maxAllowed) {
@@ -216,6 +224,7 @@ class InvestmentController extends Controller
             $grossTakeAmount = round(min($availableProfit, $remainingLimit), 2);
 
             // ── Fee deduction on this take-profit ─────────────────────
+
             $managementFeePercent  = floatval($investment->plan->management_fee  ?? 0);
             $performanceFeePercent = floatval($investment->plan->performance_fee ?? 0);
 
@@ -241,15 +250,18 @@ class InvestmentController extends Controller
             }
 
             // ── Credit user with net profit ───────────────────────────
+
             $user->available_balance += $netAmount;
             $user->save();
 
             // ── Track fee deductions on the investment ────────────────
+
             $investment->management_fee_deducted  = $alreadyDeductedMgmt + $managementFee;
             $investment->performance_fee_deducted = $alreadyDeductedPerf + $performanceFee;
             $investment->save();
 
             // ── Record the take-profit withdrawal ─────────────────────
+
             // NOTE: 'amount' records the GROSS take (pre-fee) so alreadyTakenProfit
             // cap tracking stays correct. net_amount shows what user received.
             Withdrawal::create([
@@ -282,6 +294,7 @@ class InvestmentController extends Controller
                 number_format($totalFees, 2),
                 number_format($netAmount, 2)
             ));
+
         });
     }
 

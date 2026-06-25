@@ -375,7 +375,7 @@
                     $earnedProfit = ($totalExpectedProfit * $progress) / 100;
                     $alreadyTakenProfit = $investment->withdrawals()->where('type', 'profit')->sum('amount');
                     $availableProfit = $earnedProfit - $alreadyTakenProfit;
-                    $maxTakeProfit = $investment->amount_invested >= 12000 ? 100 : 50;
+                    $maxTakeProfit = $investment->amount_invested >= 12000 ? 30 : 10;
                     $canTakeProfit = $availableProfit > 0 && $alreadyTakenProfit < $maxTakeProfit && $progress < 100;
                     $endDate = \Carbon\Carbon::parse($investment->end_date);
                     $plan = $investment->plan;
