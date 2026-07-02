@@ -56,24 +56,38 @@
                                             </button>
                                         </div>
                                     </td>
-                                    <td class="px-4 py-3 text-center">
-                                        <div class="flex items-center gap-2 justify-center">
-                                            <button type="button" 
-                                                    onclick="viewWallet('{{ $wallet->crypto_name }}', '{{ $wallet->wallet_address }}')"
-                                                    class="w-8 h-8 flex justify-center items-center rounded-full transition" 
-                                                    style="background-color: #dbeafe; color: #2563eb;">
-                                                <iconify-icon icon="majesticons:eye-line" class="text-base"></iconify-icon>
-                                            </button>
+                                  <td class="px-4 py-3 text-center">
+    <div class="flex items-center gap-2 justify-center">
+        <!-- View Button -->
+        <button type="button" 
+                onclick="viewWallet('{{ $wallet->crypto_name }}', '{{ $wallet->wallet_address }}')"
+                class="w-8 h-8 flex justify-center items-center rounded-full transition" 
+                style="background-color: #dbeafe; color: #2563eb;">
+            <iconify-icon icon="majesticons:eye-line" class="text-base"></iconify-icon>
+        </button>
 
-                                            <form action="{{ route('wallet.delete', $wallet->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this wallet?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="w-8 h-8 flex justify-center items-center rounded-full transition" style="background-color: #fee2e2; color: #dc2626;">
-                                                    <iconify-icon icon="fluent:delete-24-regular" class="text-base"></iconify-icon>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
+        <!-- EDIT Button - NEW -->
+        <a href="{{ route('admin.wallets.edit', $wallet->id) }}" 
+           class="w-8 h-8 flex justify-center items-center rounded-full transition" 
+           style="background-color: #fef3c7; color: #d97706;"
+           title="Edit Wallet">
+            <iconify-icon icon="ph:pencil-simple-bold" class="text-base"></iconify-icon>
+        </a>
+
+        <!-- Delete Button -->
+        <form action="{{ route('wallet.delete', $wallet->id) }}" 
+              method="POST" 
+              onsubmit="return confirm('Are you sure you want to delete this wallet?');">
+            @csrf
+            @method('DELETE')
+            <button type="submit" 
+                    class="w-8 h-8 flex justify-center items-center rounded-full transition" 
+                    style="background-color: #fee2e2; color: #dc2626;">
+                <iconify-icon icon="fluent:delete-24-regular" class="text-base"></iconify-icon>
+            </button>
+        </form>
+    </div>
+</td>
                                 </tr>
                                 @empty
                                 <tr>

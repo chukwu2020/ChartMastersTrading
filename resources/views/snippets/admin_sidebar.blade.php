@@ -78,7 +78,7 @@
                         <a href="{{ route('create_wallet') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Add Wallet</a>
                     </li>
                     <li>
-                        <a href="{{ route('wallet.index') }}"><i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Wallet List</a>
+                       <a href="{{ route('admin.wallets.index') }}"><i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Wallet List</a>
                     </li>
                 </ul>
             </li>

@@ -130,7 +130,7 @@ class InvestmentController extends Controller
                 'management_fee'  => $managementFee,
                 'performance_fee' => $performanceFee,
                 'bank_fee'        => 0,
-                'fee_breakdown'   => [[
+                'fee_breakdown'   => json_encode([[
                     'investment_id'              => $investment->id,
                     'plan_name'                  => $investment->plan->name,
                     'amount_invested'            => (float) $investment->amount_invested,
@@ -139,7 +139,7 @@ class InvestmentController extends Controller
                     'management_fee'             => $managementFee,
                     'performance_fee_percentage' => $performanceFeePercent,
                     'performance_fee'            => $performanceFee,
-                ]],
+                ]]),
                 'type'            => Withdrawal::TYPE_INVESTMENT,
                 'status'          => 'approved',
                 'payment_method'  => 'internal',
@@ -169,13 +169,14 @@ class InvestmentController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            // Check if investment is already withdrawn
+            if ($investment->status === 'withdrawn') {
+                return back()->with('error', 'Investment already withdrawn.');
+            }
+
             // Cannot take profit from a completed investment — use full withdrawal instead
             if (now()->gte($investment->end_date)) {
                 return back()->with('error', 'Investment is completed. Please use full withdrawal to claim your funds.');
-            }
-
-            if ($investment->status === 'withdrawn') {
-                return back()->with('error', 'Investment already withdrawn.');
             }
 
             // Must wait at least 5 hours after investing
@@ -192,7 +193,7 @@ class InvestmentController extends Controller
             // progress_percentage is 0–100. We divide by 100 to get a fraction.
             $progress            = max(min($investment->progress_percentage, 100), 0) / 100;
             $totalExpectedProfit = ($investment->amount_invested * $investment->plan->interest_rate) / 100;
-            $earnedProfit        = round($totalExpectedProfit * $progress, 2); // ✅ FIXED: was dividing by 100 twice
+            $earnedProfit        = round($totalExpectedProfit * $progress, 2);
 
             // Profit already paid out previously
             $alreadyTakenProfit = $investment->withdrawals()
@@ -232,6 +233,7 @@ class InvestmentController extends Controller
             $alreadyDeductedMgmt = floatval($investment->management_fee_deducted ?? 0);
             $alreadyDeductedPerf = floatval($investment->performance_fee_deducted ?? 0);
 
+            // Calculate chargeable amounts - only on new profit being taken
             $chargeableMgmt = max(0, $grossTakeAmount - $alreadyDeductedMgmt);
             $chargeablePerf = max(0, $grossTakeAmount - $alreadyDeductedPerf);
 
@@ -272,16 +274,16 @@ class InvestmentController extends Controller
                 'management_fee'  => $managementFee,
                 'performance_fee' => $performanceFee,
                 'bank_fee'        => 0,
-                'fee_breakdown'   => [[
+                'fee_breakdown'   => json_encode([[
                     'investment_id'              => $investment->id,
                     'plan_name'                  => $investment->plan->name,
                     'amount_invested'            => (float) $investment->amount_invested,
-                    'profit_earned'              => round($earnedProfit, 2),
+                    'profit_taken'               => $grossTakeAmount,
                     'management_fee_percentage'  => $managementFeePercent,
                     'management_fee'             => $managementFee,
                     'performance_fee_percentage' => $performanceFeePercent,
                     'performance_fee'            => $performanceFee,
-                ]],
+                ]]),
                 'type'            => Withdrawal::TYPE_PROFIT,
                 'status'          => 'approved',
                 'payment_method'  => 'internal',

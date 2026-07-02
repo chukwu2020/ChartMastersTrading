@@ -117,17 +117,24 @@ public function userIndex(Request $request)
         return view('admin.deposits.pending', compact('deposits'));
     }
 
-    public function approvedDeposits()
-    {
-        $deposits = Deposit::with(['user', 'plan', 'wallet'])
-            ->where('status', 1)
-            ->orderBy('created_at', 'desc')
-            ->get();
+  
+public function approvedDeposits()
+{
+    $deposits = Deposit::with(['user', 'plan', 'wallet'])
+        ->where('status', 1)
+        ->where('admin_deleted', 0)   // <-- added
+        ->orderBy('created_at', 'desc')
+        ->get();
 
-        return view('admin.deposits.approved', compact('deposits'));
-    }
+    return view('admin.deposits.approved', compact('deposits'));
+}
+public function adminDeleteDeposit($id)
+{
+    $deposit = Deposit::findOrFail($id);
+    $deposit->update(['admin_deleted' => true]);
 
-
+    return back()->with('success', 'Deposit removed from admin view.');
+}
     public function rejectDeposit(Request $request, $id)
     {
         $request->validate([

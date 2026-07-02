@@ -224,16 +224,38 @@
                 @foreach($plans as $index => $plan)
                     <div class="bg-white/10 rounded-xl p-4 border border-white/20" style=" background-image: url('assets/images/hero/hero-image-1.svg'); background-size: cover; background-position: center;" >
                         <p class="font-bold text-white text-sm mb-2">{{ $plan->name }}</p>
-                        <p class="text-xs text-gray-300">
-                            @if($index == 0)
-                                No withdrawal access
-                            @elseif($index == 1)
-                                Withdraw after completion
-                            @elseif($index >= 2)
-                                Full withdrawal access
-                            @endif
-                        </p>
-                    </div>
+                      @php
+    $steps = [
+        0 => 'No access',
+        1 => 'Limited',
+        2 => 'Full access'
+    ];
+    
+    $progressWidth = ($index / 2) * 100;
+    if($index > 2) $progressWidth = 100;
+@endphp
+
+<div class="space-y-1">
+    <p class="text-xs text-gray-300">
+        @if($index == 0)
+             No withdrawal access yet
+        @elseif($index == 1)
+             Withdraw after completion
+        @else
+             Full withdrawal access
+        @endif
+    </p>
+    
+    @if($index < 2)
+    <div class="w-full bg-gray-700 rounded-full h-1">
+        <div class="bg-green-500 h-1 rounded-full transition-all duration-500" 
+             style="width: {{ $progressWidth }}%"></div>
+    </div>
+    <p class="text-[10px] text-gray-500">
+        {{ $index == 0 ? 'Need 1 more participation on the next plan' : 'Complete current plan for full access' }}
+    </p>
+    @endif
+</div>               </div>
                 @endforeach
             </div>
             

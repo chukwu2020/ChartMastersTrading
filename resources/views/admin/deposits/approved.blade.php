@@ -209,6 +209,7 @@
                                         <th class="p-3 text-left">Country</th>
                                         <th class="p-3 text-left">Amount</th>
                                         <th class="p-3 text-left">Date Approved</th>
+                                        <th class="p-3 text-left">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -353,6 +354,16 @@
                                                 <span class="text-gray-600">{{ $deposit->updated_at->format('d M, Y') }}</span>
                                             </div>
                                         </td>
+
+                                        <td>
+    <form action="{{ route('admin.deposits.adminDelete', $deposit->id) }}" method="POST" onsubmit="return confirm('Remove this deposit from your view? The user will still see it as approved.');">
+        @csrf
+        @method('DELETE')
+        <button type="submit" class="text-red-500 hover:text-red-700" title="Delete from admin view">
+            <iconify-icon icon="ph:trash-fill" class="text-lg"></iconify-icon>
+        </button>
+    </form>
+</td>
                                     </tr>
                                     @endforeach
                                 </tbody>
