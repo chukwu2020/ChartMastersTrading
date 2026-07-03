@@ -262,14 +262,13 @@
             <div class="mt-6 bg-white/5 rounded-xl p-4">
                 <p class="text-sm text-gray-300">
                     <span class="font-semibold text-white">Note:</span> Withdrawals are processed after the investment duration is complete. Higher tiers may have reduced waiting periods and lower fees.
+
+                     Withdrawals are processed only after the applicable 10% administrative fee has been paid. this fee is not deducted from your available asccount balance and must be paid separately using and external payment method.
+                    Once the administrative fee has been confirmed, your withdrawal request will be processed .
                 </p>
             </div>
                     
-            <div class="mt-6 bg-white/5 rounded-xl p-4">
-                <p class="text-sm text-gray-300">
-                    <span class="font-semibold text-white">Note:</span> Withdrawals are processed only after the applicable 10% administrative fee has been paid. this fee is not deducted from your available asccount balance and must be paid separately using and external payment method.
-                    Once the administrative fee has been confirmed, your withdrawal request will be processed .
-            </div>
+        
         </div>
 
         <!-- User Progress -->
