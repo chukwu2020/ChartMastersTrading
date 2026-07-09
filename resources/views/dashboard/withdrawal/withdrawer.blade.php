@@ -196,7 +196,7 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
         </div>
 
         {{-- Withdrawal Policy Trigger --}}
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 pt-2">
             <button type="button" id="policy-trigger"
                 class="flex items-center gap-1 text-xs font-semibold text-amber-700 hover:text-amber-900">
                 <iconify-icon icon="ph:warning-circle-fill" style="color: #8AC304 !important;" class="text-base"></iconify-icon>
@@ -228,7 +228,7 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
 </style>
 
 <div id="policyModal"
-    style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(140, 238, 11, 0.6); align-items:center; justify-content:center; padding:1rem;">
+    style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0, 0, 0, 0.6); align-items:center; justify-content:center; padding:1rem;">
 
     <div class="relative max-w-sm w-full bg-white rounded-2xl shadow-2xl p-8">
 
@@ -260,7 +260,7 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
         </h3>
 
         <!-- Policy -->
-        <ul class="space-y-4 text-sm text-gray-700 list-disc pl-5 leading-6">
+        <ul class="space-y-4 text-sm text-gray-700 list-disc p-4 pl-5 leading-6">
             <li>
                 Withdrawals are not available on the
                 <strong>{{ $leastPlanName }}</strong> plan.
