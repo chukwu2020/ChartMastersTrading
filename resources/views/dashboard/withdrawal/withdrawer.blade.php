@@ -4,24 +4,33 @@
 @php
 $profile = auth()->user()->profile;
 
-$bitcoin  = $profile->bitcoin_address  ?? null;
+// Fetch active plans ordered by minimum amount so we can identify
+// the entry-level (least) plan — this is the one exempt from withdrawals.
+$plansOrdered = \App\Models\Plan::where('status', 'active')
+->orderBy('minimum_amount')
+->get();
+
+$leastPlan = $plansOrdered->first();
+$leastPlanName = $leastPlan->name ?? 'entry-level';
+
+$bitcoin = $profile->bitcoin_address ?? null;
 $etherium = $profile->etherium_address ?? null;
-$usdt     = $profile->usdt_address     ?? null;
+$usdt = $profile->usdt_address ?? null;
 
-$recipientName = $profile->recipient_name  ?? null;
-$bankName      = $profile->bank_name       ?? null;
-$accountNumber = $profile->account_number  ?? null;
-$iban          = $profile->iban            ?? null;
-$swiftBic      = $profile->swift_bic       ?? null;
-$bankAddress   = $profile->bank_address    ?? null;
+$recipientName = $profile->recipient_name ?? null;
+$bankName = $profile->bank_name ?? null;
+$accountNumber = $profile->account_number ?? null;
+$iban = $profile->iban ?? null;
+$swiftBic = $profile->swift_bic ?? null;
+$bankAddress = $profile->bank_address ?? null;
 
-$hasBankInfo     = $recipientName && $bankName && ($accountNumber || $iban) && $swiftBic;
+$hasBankInfo = $recipientName && $bankName && ($accountNumber || $iban) && $swiftBic;
 $hasCryptoWallet = $bitcoin || $etherium || $usdt;
 @endphp
 
 @if(!$hasCryptoWallet && !$hasBankInfo)
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         alert('You must add a payment method before withdrawing.');
     });
 </script>
@@ -135,10 +144,10 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
 
         {{-- No-fee notice --}}
         <div id="no-fee-notice" class="hidden p-3 rounded-lg bg-green-50 border border-green-200 text-xs text-green-700">
-             No fees apply to this withdrawal.
+            No fees apply to this withdrawal.
         </div>
 
-      
+
 
         {{-- Transfer Method --}}
         <div class="relative">
@@ -148,7 +157,7 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
                 style="border-color: #8AC304;">
                 <span id="selected-option-text">Select transfer method</span>
                 <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
             </div>
 
@@ -181,9 +190,18 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
             <div class="grid grid-cols-4 gap-2">
                 @for ($i = 1; $i <= 4; $i++)
                     <input type="password" name="digit{{ $i }}" maxlength="1" required inputmode="numeric"
-                        class="pin-input h-12 text-center text-xl rounded-lg border" style="border-color: #8AC304;">
-                @endfor
+                    class="pin-input h-12 text-center text-xl rounded-lg border" style="border-color: #8AC304;">
+                    @endfor
             </div>
+        </div>
+
+        {{-- Withdrawal Policy Trigger --}}
+        <div class="flex items-center gap-2">
+            <button type="button" id="policy-trigger"
+                class="flex items-center gap-1 text-xs font-semibold text-amber-700 hover:text-amber-900">
+                <iconify-icon icon="ph:warning-circle-fill" style="color: #8AC304 !important;" class="text-base"></iconify-icon>
+                <span class="underline">Withdrawal Policy — Must Read</span>
+            </button>
         </div>
 
         {{-- Submit --}}
@@ -192,60 +210,143 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
             style="background-color: #8AC304; color:#0C3A30; margin-top:2rem;">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
             Initiate Withdrawal
         </button>
     </form>
+
+</div>
+
+-- WITHDRAWAL POLICY MODAL
+<style>
+    .warning-icon {
+        font-size: 30px;
+        color: #8AC304 !important;
+        display: block;
+    }
+</style>
+
+<div id="policyModal"
+    style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(140, 238, 11, 0.6); align-items:center; justify-content:center; padding:1rem;">
+
+    <div class="relative max-w-sm w-full bg-white rounded-2xl shadow-2xl p-8">
+
+        <!-- Close Button -->
+        <button type="button"
+            id="policyClose"
+            class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition">
+            <iconify-icon icon="ph:x-bold" class="text-xl"></iconify-icon>
+        </button>
+
+        <!-- Heading -->
+        <h3 class="flex items-center gap-3 border-b border-gray-200 pb-4 mb-5">
+
+       <span class="flex items-center justify-center w-10 h-10 rounded-full bg-[#F3F9E8]">
+    <svg xmlns="http://www.w3.org/2000/svg"
+         class="w-7 h-7"
+         fill="#8AC304 !important"
+         viewBox="0 0 24 24">
+        <path fill-rule="evenodd"
+            d="M2.25 12a9.75 9.75 0 1119.5 0 9.75 9.75 0 01-19.5 0zm9-4.5a.75.75 0 011.5 0v5.25a.75.75 0 01-1.5 0V7.5zm.75 9a1.125 1.125 0 100-2.25 1.125 1.125 0 000 2.25z"
+            clip-rule="evenodd"/>
+    </svg>
+</span>
+
+            <span class="text-xl font-bold text-[#0C3A30]">
+                Withdrawal Policy
+            </span>
+
+        </h3>
+
+        <!-- Policy -->
+        <ul class="space-y-4 text-sm text-gray-700 list-disc pl-5 leading-6">
+            <li>
+                Withdrawals are not available on the
+                <strong>{{ $leastPlanName }}</strong> plan.
+                Only accounts on higher plans are eligible to withdraw.
+            </li>
+
+            <li>
+                A profit tax of <strong>10%–15%</strong> applies to all profits
+                before a withdrawal can be processed.
+            </li>
+
+            <li>
+                This profit tax is paid <strong>externally</strong> and is not
+                deducted from your account balance. Contact support to obtain
+                the task-paying wallet address, then send your tax payment.
+                Once support confirms your payment, your withdrawal request
+                token will be <strong>activated</strong>, and your withdrawal
+                request will be approved.
+            </li>
+        </ul>
+
+        <!-- Button -->
+        <button
+            type="button"
+            id="policyAcknowledge"
+            class="mt-6 w-full py-3 rounded-lg font-semibold transition hover:opacity-90"
+            style="background:#8AC304;color:#0C3A30;">
+            I Understand
+        </button>
+
+    </div>
+
 </div>
 
 <script>
-    const hasBankInfo     = @json($hasBankInfo);
+    const hasBankInfo = @json($hasBankInfo);
     const hasCryptoWallet = @json($hasCryptoWallet);
-    const profileUrl      = "{{ route('profile.show') }}";
+    const profileUrl = "{{ route('profile.show') }}";
 
     const bankDetails = {
-        recipientName : @json($recipientName),
-        bankName      : @json($bankName),
-        accountNumber : @json($accountNumber),
-        iban          : @json($iban),
-        swiftBic      : @json($swiftBic),
-        bankAddress   : @json($bankAddress),
+        recipientName: @json($recipientName),
+        bankName: @json($bankName),
+        accountNumber: @json($accountNumber),
+        iban: @json($iban),
+        swiftBic: @json($swiftBic),
+        bankAddress: @json($bankAddress),
     };
 
     const cryptoWallets = {
-        bitcoin  : @json($bitcoin),
-        etherium : @json($etherium),
-        usdt     : @json($usdt),
+        bitcoin: @json($bitcoin),
+        etherium: @json($etherium),
+        usdt: @json($usdt),
     };
 
     // ── DOM refs ────────────────────────────────────────────────────────
-    const amountInput        = document.getElementById('amount-input');
+    const amountInput = document.getElementById('amount-input');
     const paymentMethodInput = document.getElementById('payment_method');
-    const feeInfo            = document.getElementById('fee-info');
-    const noFeeNotice        = document.getElementById('no-fee-notice');
-    const grossAmountSpan    = document.getElementById('gross-amount');
-    const managementFeeSpan  = document.getElementById('management-fee');
+    const feeInfo = document.getElementById('fee-info');
+    const noFeeNotice = document.getElementById('no-fee-notice');
+    const grossAmountSpan = document.getElementById('gross-amount');
+    const managementFeeSpan = document.getElementById('management-fee');
     const performanceFeeSpan = document.getElementById('performance-fee');
-    const bankFeeSpan        = document.getElementById('bank-fee');
-    const totalFeesSpan      = document.getElementById('total-fees');
-    const netAmountSpan      = document.getElementById('net-amount');
-    const feeBreakdownList   = document.getElementById('fee-breakdown-list');
-    const breakdownItems     = document.getElementById('breakdown-items');
-    const rowManagement      = document.getElementById('row-management');
-    const rowPerformance     = document.getElementById('row-performance');
-    const rowBankFee         = document.getElementById('row-bank-fee');
+    const bankFeeSpan = document.getElementById('bank-fee');
+    const totalFeesSpan = document.getElementById('total-fees');
+    const netAmountSpan = document.getElementById('net-amount');
+    const feeBreakdownList = document.getElementById('fee-breakdown-list');
+    const breakdownItems = document.getElementById('breakdown-items');
+    const rowManagement = document.getElementById('row-management');
+    const rowPerformance = document.getElementById('row-performance');
+    const rowBankFee = document.getElementById('row-bank-fee');
 
-    function fmt(n) { return '$' + parseFloat(n).toFixed(2); }
+    function fmt(n) {
+        return '$' + parseFloat(n).toFixed(2);
+    }
 
     function debounce(fn, ms) {
         let t;
-        return function (...args) { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), ms); };
+        return function(...args) {
+            clearTimeout(t);
+            t = setTimeout(() => fn.apply(this, args), ms);
+        };
     }
 
     // ── Fee recalculation ────────────────────────────────────────────────
     async function recalculateFees() {
-        const amount        = parseFloat(amountInput.value) || 0;
+        const amount = parseFloat(amountInput.value) || 0;
         const paymentMethod = paymentMethodInput.value || 'cryptocurrency';
 
         if (amount <= 0) {
@@ -256,12 +357,15 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
 
         try {
             const response = await fetch('{{ route("withdrawal.calculate-fees") }}', {
-                method  : 'POST',
-                headers : {
+                method: 'POST',
+                headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 },
-                body: JSON.stringify({ amount, payment_method: paymentMethod }),
+                body: JSON.stringify({
+                    amount,
+                    payment_method: paymentMethod
+                }),
             });
 
             const data = await response.json();
@@ -271,8 +375,8 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
                 noFeeNotice.classList.add('hidden');
 
                 grossAmountSpan.textContent = fmt(amount);
-                totalFeesSpan.textContent   = '-' + fmt(data.total_fees);
-                netAmountSpan.textContent   = fmt(data.net_amount);
+                totalFeesSpan.textContent = '-' + fmt(data.total_fees);
+                netAmountSpan.textContent = fmt(data.net_amount);
 
                 // Management fee row
                 if (data.total_management_fee > 0) {
@@ -332,19 +436,53 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
     document.addEventListener('DOMContentLoaded', () => {
 
         // Disable submit on form send to prevent double-submit
-        document.getElementById('withdraw-form').addEventListener('submit', function () {
-            const btn          = document.getElementById('submitBtn');
-            btn.disabled       = true;
-            btn.innerHTML      = 'Processing...';
+        document.getElementById('withdraw-form').addEventListener('submit', function() {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = 'Processing...';
             btn.style.backgroundColor = '#B2B2B2';
-            btn.style.color    = '#333';
+            btn.style.color = '#333';
+        });
+
+        // ── Withdrawal policy modal ─────────────────────────────────────
+        const policyTrigger = document.getElementById('policy-trigger');
+        const policyModal = document.getElementById('policyModal');
+        const policyClose = document.getElementById('policyClose');
+        const policyAcknowledge = document.getElementById('policyAcknowledge');
+
+        // Force it to the very end of <body> so no ancestor (transform,
+        // overflow:hidden, or otherwise) can trap it or break its
+        // fixed positioning. This is what fixes it rendering inline
+        // instead of as a full-screen overlay.
+        if (policyModal && policyModal.parentElement !== document.body) {
+            document.body.appendChild(policyModal);
+        }
+
+        function openPolicyModal() {
+            policyModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // lock background scroll
+        }
+
+        function closePolicyModal() {
+            policyModal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
+        policyTrigger?.addEventListener('click', openPolicyModal);
+        policyClose?.addEventListener('click', closePolicyModal);
+        policyAcknowledge?.addEventListener('click', closePolicyModal);
+        policyModal?.addEventListener('click', (e) => {
+            if (e.target === policyModal) closePolicyModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && policyModal.style.display === 'flex') closePolicyModal();
         });
 
         // ── Main dropdown ──────────────────────────────────────────────
-        const dropdown     = document.getElementById('custom-dropdown');
-        const options      = document.getElementById('dropdown-options');
+        const dropdown = document.getElementById('custom-dropdown');
+        const options = document.getElementById('dropdown-options');
         const selectedText = document.getElementById('selected-option-text');
-        const walletInfo   = document.getElementById('wallet-info');
+        const walletInfo = document.getElementById('wallet-info');
 
         dropdown.addEventListener('click', e => {
             e.stopPropagation();
@@ -362,14 +500,17 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
         });
 
         document.querySelectorAll('.option-item').forEach(option => {
-            option.addEventListener('click', function () {
+            option.addEventListener('click', function() {
                 selectedText.textContent = this.textContent.trim();
                 paymentMethodInput.value = this.dataset.value;
                 options.classList.add('hidden');
 
                 if (this.dataset.value === 'cryptocurrency') showCryptoWalletSelection();
                 else if (this.dataset.value === 'digital_wallet') showBankSelection();
-                else { walletInfo.classList.add('hidden'); walletInfo.innerHTML = ''; }
+                else {
+                    walletInfo.classList.add('hidden');
+                    walletInfo.innerHTML = '';
+                }
 
                 // Recalculate fees when method changes
                 recalculateFees();
@@ -465,12 +606,17 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
             const wt = document.getElementById('wallet-text');
             const wc = document.getElementById('wallet_choice_input');
             if (!wd || !wo) return;
-            wd.addEventListener('click', e => { wo.classList.toggle('hidden'); e.stopPropagation(); });
-            document.addEventListener('click', e => { if (!wd.contains(e.target) && !wo.contains(e.target)) wo.classList.add('hidden'); });
+            wd.addEventListener('click', e => {
+                wo.classList.toggle('hidden');
+                e.stopPropagation();
+            });
+            document.addEventListener('click', e => {
+                if (!wd.contains(e.target) && !wo.contains(e.target)) wo.classList.add('hidden');
+            });
             document.querySelectorAll('.wallet-item').forEach(item => {
-                item.addEventListener('click', function () {
+                item.addEventListener('click', function() {
                     wt.textContent = this.textContent.trim();
-                    wc.value       = this.dataset.wallet;
+                    wc.value = this.dataset.wallet;
                     wo.classList.add('hidden');
                 });
             });
@@ -483,10 +629,15 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
             const bt = document.getElementById('bank-text');
             const wc = document.getElementById('wallet_choice_input');
             if (!bd || !bo) return;
-            bd.addEventListener('click', e => { bo.classList.toggle('hidden'); e.stopPropagation(); });
-            document.addEventListener('click', e => { if (!bd.contains(e.target) && !bo.contains(e.target)) bo.classList.add('hidden'); });
+            bd.addEventListener('click', e => {
+                bo.classList.toggle('hidden');
+                e.stopPropagation();
+            });
+            document.addEventListener('click', e => {
+                if (!bd.contains(e.target) && !bo.contains(e.target)) bo.classList.add('hidden');
+            });
             document.querySelectorAll('.bank-item').forEach(item => {
-                item.addEventListener('click', function () {
+                item.addEventListener('click', function() {
                     bt.textContent = `${bankDetails.bankName} — ${bankDetails.accountNumber || bankDetails.iban}`;
                     bt.classList.replace('text-gray-600', 'text-gray-800');
                     wc.value = this.dataset.bank;
@@ -498,8 +649,8 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
         // ── No payment method nudge ────────────────────────────────────
         function showUpdateProfileDropdown() {
             if (document.getElementById('update-profile-dropdown')) return;
-            const el    = document.createElement('div');
-            el.id       = 'update-profile-dropdown';
+            const el = document.createElement('div');
+            el.id = 'update-profile-dropdown';
             el.className = 'absolute mt-2 w-full rounded-xl border shadow-lg bg-white z-50 overflow-hidden opacity-0 translate-y-3 transition-all duration-500';
             el.style.borderColor = '#8AC304';
             el.innerHTML = `
@@ -539,7 +690,9 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
             e.preventDefault();
             const digits = (e.clipboardData || window.clipboardData)
                 .getData('text').replace(/\D/g, '').split('').slice(0, 4);
-            digits.forEach((d, i) => { pinInputs[i].value = d; });
+            digits.forEach((d, i) => {
+                pinInputs[i].value = d;
+            });
             pinInputs[Math.min(digits.length, 3)].focus();
         });
 
@@ -547,16 +700,23 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
 </script>
 
 <style>
-    .option-item:hover, .wallet-item:hover {
+    .option-item:hover,
+    .wallet-item:hover {
         background-color: #8AC304 !important;
         color: #0C3A30 !important;
     }
-    .bank-item:hover { background-color: #f0fde4 !important; }
 
-    select:focus, input:focus,
-    #custom-dropdown:focus, #wallet-dropdown:focus, #bank-dropdown:focus {
+    .bank-item:hover {
+        background-color: #f0fde4 !important;
+    }
+
+    select:focus,
+    input:focus,
+    #custom-dropdown:focus,
+    #wallet-dropdown:focus,
+    #bank-dropdown:focus {
         outline: none !important;
-        box-shadow: 0 0 0 2px rgba(138,195,4,.3) !important;
+        box-shadow: 0 0 0 2px rgba(138, 195, 4, .3) !important;
         border-color: #8AC304 !important;
     }
 
@@ -567,12 +727,25 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
     }
 
     @keyframes slideDown {
-        from { opacity: 0; transform: translateY(-8px); }
-        to   { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
-    #bank-options::-webkit-scrollbar       { width: 4px; }
-    #bank-options::-webkit-scrollbar-thumb { background: #8AC304; border-radius: 2px; }
+    #bank-options::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    #bank-options::-webkit-scrollbar-thumb {
+        background: #8AC304;
+        border-radius: 2px;
+    }
 </style>
 
 @endsection

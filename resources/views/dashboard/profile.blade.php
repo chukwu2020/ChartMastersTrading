@@ -150,11 +150,11 @@
                                 <h6 class="text-base mt-6 mb-4 font-semibold text-[#0C3A30]">Crypto Wallets</h6>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label class="block font-semibold text-sm text-[#0C3A30] mb-2">Bitcoin Address</label>
+                                        <label class="block font-semibold text-sm text-[#0C3A30] mb-2">Bitcoin Address </label>
                                         <input type="text" name="bitcoin_address" value="{{ old('bitcoin_address', $user->profile->bitcoin_address ?? '') }}" class="form-control custom-input" />
                                     </div>
                                     <div>
-                                        <label class="block font-semibold text-sm text-[#0C3A30] mb-2">USDT Address</label>
+                                        <label class="block font-semibold text-sm text-[#0C3A30] mb-2">USDT Address (USDT Trc20)</label>
                                         <input type="text" name="usdt_address" value="{{ old('usdt_address', $user->profile->usdt_address ?? '') }}" class="form-control custom-input" />
                                     </div>
                                     <div>
