@@ -218,7 +218,7 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
 
 </div>
 
--- WITHDRAWAL POLICY MODAL
+
 <style>
     .warning-icon {
         font-size: 30px;
