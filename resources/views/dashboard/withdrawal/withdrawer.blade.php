@@ -220,7 +220,7 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
 
 
 <style>
-    .warning-icon {
+    .warning-icon { 
         font-size: 30px;
         color: #8AC304 !important;
         display: block;
