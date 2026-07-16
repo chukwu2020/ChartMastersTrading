@@ -239,10 +239,12 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
         padding:1rem;
     ">
 
-    <div class="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+    {{-- Modal shell is now a flex column capped at 85vh:
+         header + footer stay fixed, only the middle content area scrolls. --}}
+    <div class="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col" style="max-height:85vh;">
 
-        <!-- Header -->
-        <div class="flex items-center justify-between px-6 py-5 bg-[#0C3A30]">
+        <!-- Header (fixed) -->
+        <div class="flex items-center justify-between px-6 py-5 bg-[#0C3A30] flex-shrink-0">
 
             <div class="flex items-center gap-3">
 
@@ -282,17 +284,17 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
         </div>
 
 
-        <!-- Policy Content -->
-        <div class="p-6">
+        <!-- Policy Content (scrollable) -->
+        <div class="p-6 overflow-y-auto flex-1">
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 <!-- Policy 1 -->
                 <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
 
-                    <h4 class="font-semibold text-[#0C3A30] mb-2">
+                    <h6 class="font-semibold text-[#0C3A30] mb-2">
                         Plan Eligibility
-                    </h4>
+                    </h6>
 
                     <p class="text-sm text-gray-700 leading-6">
                         Withdrawals are not available on the
@@ -306,9 +308,9 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
                 <!-- Policy 2 -->
                 <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
 
-                    <h4 class="font-semibold text-[#0C3A30] mb-2">
+                    <h6 class="font-semibold text-[#0C3A30] mb-2">
                         Profit Tax
-                    </h4>
+                    </h6>
 
                     <p class="text-sm text-gray-700 leading-6">
                         A profit tax of <strong>10%–15%</strong> applies to all
@@ -321,9 +323,9 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
                 <!-- Policy 3 -->
                 <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
 
-                    <h4 class="font-semibold text-[#0C3A30] mb-2">
+                    <h6 class="font-semibold text-[#0C3A30] mb-2">
                         External Payment
-                    </h4>
+                    </h6>
 
                     <p class="text-sm text-gray-700 leading-6">
                         The profit tax is paid <strong>externally</strong> and is
@@ -337,9 +339,9 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
                 <!-- Policy 4 -->
                 <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
 
-                    <h4 class="font-semibold text-[#0C3A30] mb-2">
+                    <h6 class="font-semibold text-[#0C3A30] mb-2">
                         Trading Sessions
-                    </h4>
+                    </h6>
 
                     <p class="text-sm text-gray-700 leading-6">
                         Traders must complete
@@ -354,9 +356,9 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
                 <!-- Policy 5 -->
                 <div class="p-4 rounded-xl bg-gray-50 border border-gray-100 md:col-span-2">
 
-                    <h4 class="font-semibold text-[#0C3A30] mb-2">
+                    <h6 class="font-semibold text-[#0C3A30] mb-2">
                         Early Withdrawal
-                    </h4>
+                    </h6>
 
                     <p class="text-sm text-gray-700 leading-6">
                         Requesting a withdrawal before completing
@@ -375,8 +377,8 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
         </div>
 
 
-        <!-- Footer -->
-        <div class="px-6 py-5 border-t border-gray-100 bg-white">
+        <!-- Footer (fixed) -->
+        <div class="px-6 py-5 border-t border-gray-100 bg-white flex-shrink-0">
 
             <button
                 type="button"
