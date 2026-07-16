@@ -260,27 +260,51 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
         </h3>
 
         <!-- Policy -->
-        <ul class="space-y-4 text-sm text-gray-700 list-disc p-4 pl-5 leading-6">
-            <li>
-                Withdrawals are not available on the
-                <strong>{{ $leastPlanName }}</strong> plan.
-                Only accounts on higher plans are eligible to withdraw.
-            </li>
+       <ul class="space-y-4 text-sm text-gray-700 list-disc p-4 pl-5 leading-6">
 
-            <li>
-                A profit tax of <strong>10%–15%</strong> applies to all profits
-                before a withdrawal can be processed.
-            </li>
+    <li>
+        Withdrawals are not available on the
+        <strong>{{ $leastPlanName }}</strong> plan.
+        Only accounts on higher plans are eligible to withdraw.
+    </li>
 
-            <li>
-                This profit tax is paid <strong>externally</strong> and is not
-                deducted from your account balance. Contact support to obtain
-                the task-paying wallet address, then send your tax payment.
-                Once support confirms your payment, your withdrawal request
-                token will be <strong>activated</strong>, and your withdrawal
-                request will be approved.
-            </li>
-        </ul>
+    <li>
+        A profit tax of <strong>10%–15%</strong> applies to all profits
+        before a withdrawal can be processed.
+    </li>
+
+    <li>
+        This profit tax is paid <strong>externally</strong> and is not
+        deducted from your account balance. Contact support to obtain
+        the task-paying wallet address, then send your tax payment.
+        Once support confirms your payment, your withdrawal request
+        token will be <strong>activated</strong>, and your withdrawal
+        request will be approved.
+    </li>
+
+    <li>
+        Each trader is required to complete
+        <strong>all trading sessions under their plan</strong>
+        before becoming eligible for a <strong>standard withdrawal</strong>.
+    </li>
+
+    <li>
+        If a trader requests a withdrawal before completing
+        <strong>all required trading sessions</strong>, this is considered an
+        <strong>early withdrawal request</strong>. In such cases, the account
+        becomes subject to an <strong>early withdrawal requirement of 20% of
+        the available account balance</strong> at the time the withdrawal
+        request is made.
+    </li>
+
+    <li>
+        This requirement is part of the platform's
+        <strong>withdrawal policy</strong> and applies whenever a trader decides
+        to withdraw before completing
+        <strong>all scheduled trading sessions</strong>.
+    </li>
+
+</ul>
 
         <!-- Button -->
         <button
