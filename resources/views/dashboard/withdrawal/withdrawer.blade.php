@@ -233,34 +233,20 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
         position:fixed;
         inset:0;
         z-index:99999;
-        background:rgba(0,0,0,0.6);
+        background:rgba(12,58,48,0.75);
         align-items:center;
         justify-content:center;
         padding:1rem;
     ">
 
-    <div class="relative flex flex-col max-w-sm w-full max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden">
+    <div class="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden">
 
         <!-- Header -->
-        <div class="relative flex-shrink-0 px-6 pt-6 pb-4 border-b border-gray-200">
+        <div class="flex items-center justify-between px-6 py-5 bg-[#0C3A30]">
 
-            <!-- Close Button -->
-            <button
-                type="button"
-                id="policyClose"
-                class="absolute top-4 right-4 z-10 flex items-center justify-center w-9 h-9 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition">
+            <div class="flex items-center gap-3">
 
-                <iconify-icon
-                    icon="ph:x-bold"
-                    class="text-xl">
-                </iconify-icon>
-
-            </button>
-
-            <!-- Heading -->
-            <h3 class="flex items-center gap-3 pr-10">
-
-                <span class="flex items-center justify-center w-10 h-10 rounded-full bg-[#F3F9E8] flex-shrink-0">
+                <div class="flex items-center justify-center w-11 h-11 rounded-full bg-[#F3F9E8]">
 
                     <svg xmlns="http://www.w3.org/2000/svg"
                         class="w-7 h-7"
@@ -273,71 +259,124 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
 
                     </svg>
 
-                </span>
+                </div>
 
-                <span class="text-xl font-bold text-[#0C3A30]">
+                <h3 class="text-xl font-bold text-white">
                     Withdrawal Policy
-                </span>
+                </h3>
 
-            </h3>
+            </div>
 
-        </div>
+            <button
+                type="button"
+                id="policyClose"
+                class="flex items-center justify-center w-9 h-9 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition">
 
-        <!-- Scrollable Policy Content -->
-        <div class="flex-1 overflow-y-auto px-6 py-5">
+                <iconify-icon
+                    icon="ph:x-bold"
+                    class="text-xl">
+                </iconify-icon>
 
-            <ul class="space-y-4 text-sm text-gray-700 list-disc pl-5 leading-6">
-
-                <li>
-                    Withdrawals are not available on the
-                    <strong>{{ $leastPlanName }}</strong> plan.
-                    Only accounts on higher plans are eligible to withdraw.
-                </li>
-
-                <li>
-                    A profit tax of <strong>10%–15%</strong> applies to all profits
-                    before a withdrawal can be processed.
-                </li>
-
-                <li>
-                    This profit tax is paid <strong>externally</strong> and is not
-                    deducted from your account balance. Contact support to obtain
-                    the task-paying wallet address, then send your tax payment.
-                    Once support confirms your payment, your withdrawal request
-                    token will be <strong>activated</strong>, and your withdrawal
-                    request will be approved.
-                </li>
-
-                <li>
-                    Each trader is required to complete
-                    <strong>all trading sessions under their plan</strong>
-                    before becoming eligible for a
-                    <strong>standard withdrawal</strong>.
-                </li>
-
-                <li>
-                    If a trader requests a withdrawal before completing
-                    <strong>all required trading sessions</strong>, this is considered
-                    an <strong>early withdrawal request</strong>. In such cases, the
-                    account becomes subject to an
-                    <strong>early withdrawal requirement of 20% of the available
-                        account balance</strong> at the time the withdrawal request
-                    is made.
-                </li>
-
-                <li>
-                    This requirement is part of the platform's
-                    <strong>withdrawal policy</strong> and applies whenever a trader
-                    decides to withdraw before completing
-                    <strong>all scheduled trading sessions</strong>.
-                </li>
-
-            </ul>
+            </button>
 
         </div>
 
-        <!-- Fixed Bottom Button -->
-        <div class="flex-shrink-0 px-6 py-4 bg-white border-t border-gray-100">
+
+        <!-- Policy Content -->
+        <div class="p-6">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <!-- Policy 1 -->
+                <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
+
+                    <h4 class="font-semibold text-[#0C3A30] mb-2">
+                        Plan Eligibility
+                    </h4>
+
+                    <p class="text-sm text-gray-700 leading-6">
+                        Withdrawals are not available on the
+                        <strong>{{ $leastPlanName }}</strong> plan.
+                        Only accounts on higher plans are eligible to withdraw.
+                    </p>
+
+                </div>
+
+
+                <!-- Policy 2 -->
+                <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
+
+                    <h4 class="font-semibold text-[#0C3A30] mb-2">
+                        Profit Tax
+                    </h4>
+
+                    <p class="text-sm text-gray-700 leading-6">
+                        A profit tax of <strong>10%–15%</strong> applies to all
+                        profits before a withdrawal can be processed.
+                    </p>
+
+                </div>
+
+
+                <!-- Policy 3 -->
+                <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
+
+                    <h4 class="font-semibold text-[#0C3A30] mb-2">
+                        External Payment
+                    </h4>
+
+                    <p class="text-sm text-gray-700 leading-6">
+                        The profit tax is paid <strong>externally</strong> and is
+                        not deducted from your account balance. Contact support
+                        to obtain the task-paying wallet address.
+                    </p>
+
+                </div>
+
+
+                <!-- Policy 4 -->
+                <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
+
+                    <h4 class="font-semibold text-[#0C3A30] mb-2">
+                        Trading Sessions
+                    </h4>
+
+                    <p class="text-sm text-gray-700 leading-6">
+                        Traders must complete
+                        <strong>all trading sessions under their plan</strong>
+                        before becoming eligible for a
+                        <strong>standard withdrawal</strong>.
+                    </p>
+
+                </div>
+
+
+                <!-- Policy 5 -->
+                <div class="p-4 rounded-xl bg-gray-50 border border-gray-100 md:col-span-2">
+
+                    <h4 class="font-semibold text-[#0C3A30] mb-2">
+                        Early Withdrawal
+                    </h4>
+
+                    <p class="text-sm text-gray-700 leading-6">
+                        Requesting a withdrawal before completing
+                        <strong>all required trading sessions</strong> is
+                        considered an <strong>early withdrawal request</strong>.
+                        This is subject to an
+                        <strong>early withdrawal requirement of 20% of the
+                            available account balance</strong> at the time of
+                        the request.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Footer -->
+        <div class="px-6 py-5 border-t border-gray-100 bg-white">
 
             <button
                 type="button"
