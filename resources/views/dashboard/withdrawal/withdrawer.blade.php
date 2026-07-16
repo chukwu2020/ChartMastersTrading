@@ -220,7 +220,7 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
 
 
 <style>
-    .warning-icon { 
+    .warning-icon {
         font-size: 30px;
         color: #8AC304 !important;
         display: block;
@@ -228,92 +228,128 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
 </style>
 
 <div id="policyModal"
-    style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0, 0, 0, 0.6); align-items:center; justify-content:center; padding:1rem;">
+    style="
+        display:none;
+        position:fixed;
+        inset:0;
+        z-index:99999;
+        background:rgba(0,0,0,0.6);
+        align-items:center;
+        justify-content:center;
+        padding:1rem;
+    ">
 
-    <div class="relative max-w-sm w-full bg-white rounded-2xl shadow-2xl p-8">
+    <div class="relative flex flex-col max-w-sm w-full max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden">
 
-        <!-- Close Button -->
-        <button type="button"
-            id="policyClose"
-            class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition">
-            <iconify-icon icon="ph:x-bold" class="text-xl"></iconify-icon>
-        </button>
+        <!-- Header -->
+        <div class="relative flex-shrink-0 px-6 pt-6 pb-4 border-b border-gray-200">
 
-        <!-- Heading -->
-        <h3 class="flex items-center gap-3 border-b border-gray-200 pb-4 mb-5">
+            <!-- Close Button -->
+            <button
+                type="button"
+                id="policyClose"
+                class="absolute top-4 right-4 z-10 flex items-center justify-center w-9 h-9 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition">
 
-       <span class="flex items-center justify-center w-10 h-10 rounded-full bg-[#F3F9E8]">
-    <svg xmlns="http://www.w3.org/2000/svg"
-         class="w-7 h-7"
-         fill="#8AC304 !important"
-         viewBox="0 0 24 24">
-        <path fill-rule="evenodd"
-            d="M2.25 12a9.75 9.75 0 1119.5 0 9.75 9.75 0 01-19.5 0zm9-4.5a.75.75 0 011.5 0v5.25a.75.75 0 01-1.5 0V7.5zm.75 9a1.125 1.125 0 100-2.25 1.125 1.125 0 000 2.25z"
-            clip-rule="evenodd"/>
-    </svg>
-</span>
+                <iconify-icon
+                    icon="ph:x-bold"
+                    class="text-xl">
+                </iconify-icon>
 
-            <span class="text-xl font-bold text-[#0C3A30]">
-                Withdrawal Policy
-            </span>
+            </button>
 
-        </h3>
+            <!-- Heading -->
+            <h3 class="flex items-center gap-3 pr-10">
 
-        <!-- Policy -->
-       <ul class="space-y-4 text-sm text-gray-700 list-disc p-4 pl-5 leading-6">
+                <span class="flex items-center justify-center w-10 h-10 rounded-full bg-[#F3F9E8] flex-shrink-0">
 
-    <li>
-        Withdrawals are not available on the
-        <strong>{{ $leastPlanName }}</strong> plan.
-        Only accounts on higher plans are eligible to withdraw.
-    </li>
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="w-7 h-7"
+                        fill="#8AC304"
+                        viewBox="0 0 24 24">
 
-    <li>
-        A profit tax of <strong>10%–15%</strong> applies to all profits
-        before a withdrawal can be processed.
-    </li>
+                        <path fill-rule="evenodd"
+                            d="M2.25 12a9.75 9.75 0 1119.5 0 9.75 9.75 0 01-19.5 0zm9-4.5a.75.75 0 011.5 0v5.25a.75.75 0 01-1.5 0V7.5zm.75 9a1.125 1.125 0 100-2.25 1.125 1.125 0 000 2.25z"
+                            clip-rule="evenodd" />
 
-    <li>
-        This profit tax is paid <strong>externally</strong> and is not
-        deducted from your account balance. Contact support to obtain
-        the task-paying wallet address, then send your tax payment.
-        Once support confirms your payment, your withdrawal request
-        token will be <strong>activated</strong>, and your withdrawal
-        request will be approved.
-    </li>
+                    </svg>
 
-    <li>
-        Each trader is required to complete
-        <strong>all trading sessions under their plan</strong>
-        before becoming eligible for a <strong>standard withdrawal</strong>.
-    </li>
+                </span>
 
-    <li>
-        If a trader requests a withdrawal before completing
-        <strong>all required trading sessions</strong>, this is considered an
-        <strong>early withdrawal request</strong>. In such cases, the account
-        becomes subject to an <strong>early withdrawal requirement of 20% of
-        the available account balance</strong> at the time the withdrawal
-        request is made.
-    </li>
+                <span class="text-xl font-bold text-[#0C3A30]">
+                    Withdrawal Policy
+                </span>
 
-    <li>
-        This requirement is part of the platform's
-        <strong>withdrawal policy</strong> and applies whenever a trader decides
-        to withdraw before completing
-        <strong>all scheduled trading sessions</strong>.
-    </li>
+            </h3>
 
-</ul>
+        </div>
 
-        <!-- Button -->
-        <button
-            type="button"
-            id="policyAcknowledge"
-            class="mt-6 w-full py-3 rounded-lg font-semibold transition hover:opacity-90"
-            style="background:#8AC304;color:#0C3A30;">
-            I Understand
-        </button>
+        <!-- Scrollable Policy Content -->
+        <div class="flex-1 overflow-y-auto px-6 py-5">
+
+            <ul class="space-y-4 text-sm text-gray-700 list-disc pl-5 leading-6">
+
+                <li>
+                    Withdrawals are not available on the
+                    <strong>{{ $leastPlanName }}</strong> plan.
+                    Only accounts on higher plans are eligible to withdraw.
+                </li>
+
+                <li>
+                    A profit tax of <strong>10%–15%</strong> applies to all profits
+                    before a withdrawal can be processed.
+                </li>
+
+                <li>
+                    This profit tax is paid <strong>externally</strong> and is not
+                    deducted from your account balance. Contact support to obtain
+                    the task-paying wallet address, then send your tax payment.
+                    Once support confirms your payment, your withdrawal request
+                    token will be <strong>activated</strong>, and your withdrawal
+                    request will be approved.
+                </li>
+
+                <li>
+                    Each trader is required to complete
+                    <strong>all trading sessions under their plan</strong>
+                    before becoming eligible for a
+                    <strong>standard withdrawal</strong>.
+                </li>
+
+                <li>
+                    If a trader requests a withdrawal before completing
+                    <strong>all required trading sessions</strong>, this is considered
+                    an <strong>early withdrawal request</strong>. In such cases, the
+                    account becomes subject to an
+                    <strong>early withdrawal requirement of 20% of the available
+                        account balance</strong> at the time the withdrawal request
+                    is made.
+                </li>
+
+                <li>
+                    This requirement is part of the platform's
+                    <strong>withdrawal policy</strong> and applies whenever a trader
+                    decides to withdraw before completing
+                    <strong>all scheduled trading sessions</strong>.
+                </li>
+
+            </ul>
+
+        </div>
+
+        <!-- Fixed Bottom Button -->
+        <div class="flex-shrink-0 px-6 py-4 bg-white border-t border-gray-100">
+
+            <button
+                type="button"
+                id="policyAcknowledge"
+                class="w-full py-3 rounded-lg font-semibold transition hover:opacity-90"
+                style="background:#8AC304; color:#0C3A30;">
+
+                I Understand
+
+            </button>
+
+        </div>
 
     </div>
 
