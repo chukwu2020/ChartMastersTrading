@@ -390,7 +390,7 @@ $hasCryptoWallet = $bitcoin || $etherium || $usdt;
 
             </button>
 
-        </div>
+        </div> 
 
     </div>
 

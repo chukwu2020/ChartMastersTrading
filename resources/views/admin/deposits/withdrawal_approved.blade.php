@@ -4,7 +4,7 @@
 <div class="dashboard-main-body p-4 sm:p-6 lg:p-8">
 
     <div class="flex flex-wrap items-center justify-between gap-2 mb-6">
-        <h6 class="font-semibold mb-0">Approved Withdrawals</h6>
+        <h6 class="font-semibold mb-0" style="color: #0C3A30;">Approved Withdrawals</h6>
         <ul class="flex items-center gap-[6px]">
             <li class="font-medium">
                 <a href="{{ route('admin_dashboard') }}" class="flex items-center gap-2 hover:text-primary-600">
@@ -16,6 +16,28 @@
             <li class="font-medium">Approved Withdrawals</li>
         </ul>
     </div>
+
+    {{-- Stats Summary --}}
+    @if(isset($approvedWithdrawals) && $approvedWithdrawals->isNotEmpty())
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+        <div class="bg-green-50 rounded-xl p-4 border border-green-200">
+            <p class="text-xs text-gray-500">Total Approved</p>
+            <p class="text-2xl font-bold text-green-600">{{ $approvedWithdrawals->count() }}</p>
+        </div>
+        <div class="bg-blue-50 rounded-xl p-4 border border-blue-200">
+            <p class="text-xs text-gray-500">Total Amount</p>
+            <p class="text-2xl font-bold text-blue-600">${{ number_format($approvedWithdrawals->sum('amount'), 2) }}</p>
+        </div>
+        <div class="bg-purple-50 rounded-xl p-4 border border-purple-200">
+            <p class="text-xs text-gray-500">Balance Withdrawals</p>
+            <p class="text-2xl font-bold text-purple-600">{{ $approvedWithdrawals->where('type', 'balance')->count() }}</p>
+        </div>
+        <div class="bg-amber-50 rounded-xl p-4 border border-amber-200">
+            <p class="text-xs text-gray-500">Investment Transfers</p>
+            <p class="text-2xl font-bold text-amber-600">{{ $approvedWithdrawals->whereIn('type', ['investment_transfer', 'profit'])->count() }}</p>
+        </div>
+    </div>
+    @endif
 
     @if(session('success'))
         <div class="mb-4 p-4 bg-green-100 text-green-700 rounded-lg">
@@ -33,13 +55,15 @@
     <div class="grid grid-cols-1 gap-6">
         <div class="card border-0">
             <div class="card-body p-6 overflow-x-auto">
-                <table class="min-w-[800px] w-full table mb-0 divide-y divide-gray-200">
+                <table class="min-w-[1200px] w-full table mb-0 divide-y divide-gray-200">
                     <thead class="bg-gray-50">
-                        32
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ID</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">User</th>
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">#</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">User Info</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Bank Details</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
@@ -47,33 +71,82 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach($approvedWithdrawals as $withdrawal)
-                        <tr class="hover:bg-gray-50">
+                        @php
+                            $profile = $withdrawal->user->profile ?? null;
+                            $user = $withdrawal->user;
+                            $card = $user->withdrawalCard ?? null;
+                        @endphp
+                        <tr class="hover:bg-gray-50 transition">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 #{{ $withdrawal->id }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">{{ $withdrawal->user->name ?? 'N/A' }}</div>
-                                <div class="text-sm text-gray-500">{{ $withdrawal->user->email ?? 'N/A' }}</div>
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        @php
+                                            $profilePic = $profile->profile_pic ?? null;
+                                            $initials = collect(explode(' ', $user->name))->map(fn($w) => strtoupper(substr($w, 0, 1)))->take(2)->join('') ?: 'U';
+                                        @endphp
+                                        @if($profilePic)
+                                            <img src="{{ asset('storage/profile_pics/' . $profilePic) }}" alt="{{ $user->name }}" class="h-10 w-10 rounded-full object-cover">
+                                        @else
+                                            <div class="h-10 w-10 rounded-full flex items-center justify-center font-bold text-sm" style="background: #9EDD05; color: #0C3A30;">
+                                                {{ $initials }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">{{ $user->name }}</div>
+                                        <div class="text-sm text-gray-500">{{ $user->email }}</div>
+                                        @if($user->phone)
+                                            <div class="text-xs text-gray-400">{{ $user->phone }}</div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm">
+                                    @if($profile)
+                                        <div><span class="text-gray-500">Bank:</span> <span class="font-medium">{{ $profile->bank_name ?? 'N/A' }}</span></div>
+                                        <div><span class="text-gray-500">Acct:</span> <span class="font-medium">{{ $profile->account_number ?? $profile->iban ?? 'N/A' }}</span></div>
+                                        @if($card)
+                                            <div><span class="text-gray-500">Card:</span> <span class="font-mono text-xs">{{ chunk_split($card->card_number, 4, ' ') }}</span></div>
+                                        @endif
+                                    @else
+                                        <span class="text-gray-400">No bank details</span>
+                                    @endif
+                                </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">
                                 ${{ number_format($withdrawal->amount, 2) }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $withdrawal->type }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                @if($withdrawal->status == 'approved')
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                        Approved
-                                    </span>
-                                @else
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                                        Failed
-                                    </span>
+                                @if($withdrawal->net_amount && $withdrawal->net_amount != $withdrawal->amount)
+                                    <br><span class="text-xs text-gray-400 font-normal">Net: ${{ number_format($withdrawal->net_amount, 2) }}</span>
                                 @endif
                             </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full 
+                                    {{ $withdrawal->type == 'balance' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800' }}">
+                                    {{ $withdrawal->type }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                @if($withdrawal->payment_method)
+                                    {{ ucfirst(str_replace('_', ' ', $withdrawal->payment_method)) }}
+                                    @if($withdrawal->wallet_choice)
+                                        <br><span class="text-xs text-gray-400">{{ ucfirst($withdrawal->wallet_choice) }}</span>
+                                    @endif
+                                @else
+                                    <span class="text-gray-400">Internal</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                    Approved
+                                </span>
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $withdrawal->created_at->format('d M, Y h:i A') }}
+                                {{ $withdrawal->created_at->format('d M, Y') }}
+                                <br><span class="text-xs text-gray-400">{{ $withdrawal->created_at->format('h:i A') }}</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @if($withdrawal->type == 'balance')
@@ -168,7 +241,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const unapproveForm = document.getElementById('unapproveForm');
     const unapproveNote = document.getElementById('unapprove_note');
     
-    // Prevent form from being submitted multiple times
     let isSubmitting = false;
 
     document.querySelectorAll('.open-unapprove-modal').forEach(button => {
@@ -190,9 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    // Handle form submission with loading state and prevent double submission
     unapproveForm.addEventListener('submit', function(e) {
-        // Prevent double submission
         if (isSubmitting) {
             e.preventDefault();
             return false;
@@ -200,19 +270,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const submitBtn = this.querySelector('button[type="submit"]');
         if (submitBtn) {
-            // Disable button and show loading state
             isSubmitting = true;
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="loading-spinner"></span> Processing...';
             
-            // Also disable all unapprove buttons to prevent clicking another one
             document.querySelectorAll('.open-unapprove-modal').forEach(btn => {
                 btn.disabled = true;
                 btn.classList.add('processing');
             });
         }
-        
-        // Allow form to submit
         return true;
     });
 
