@@ -53,7 +53,7 @@
 
     @if(isset($approvedWithdrawals) && $approvedWithdrawals->isNotEmpty())
     <div class="grid grid-cols-1 gap-6">
-        <div class="card border-0">
+        <div class="card border-0 bg-white rounded-xl shadow-sm">
             <div class="card-body p-6 overflow-x-auto">
                 <table class="min-w-[1200px] w-full table mb-0 divide-y divide-gray-200">
                     <thead class="bg-gray-50">
@@ -178,7 +178,7 @@
         </div>
     </div>
     @else
-        <div class="text-center py-12">
+        <div class="text-center py-12 bg-white rounded-xl shadow-sm">
             <div class="text-gray-400 text-6xl mb-4">
                 <iconify-icon icon="ph:check-circle-fill" class="inline"></iconify-icon>
             </div>
