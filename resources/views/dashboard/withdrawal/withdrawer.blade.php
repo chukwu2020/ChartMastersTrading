@@ -454,7 +454,7 @@ if ($locked) {
 
         if (data.reason === 'admin_locked') {
             title.textContent = 'Withdrawals Locked';
-            message.textContent = 'Your account is currently locked for withdrawals. Please contact support.';
+            message.textContent = 'Please complete your current trading session before requesting a withdrawal.';
         } else if (data.reason === 'check_failed') {
             title.textContent = 'Unable to Verify';
             message.textContent = 'Could not verify your withdrawal status. Please try again or contact support.';
