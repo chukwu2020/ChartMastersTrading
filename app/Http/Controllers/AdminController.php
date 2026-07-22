@@ -252,7 +252,27 @@ public function adminDeleteDeposit($id)
 
         return redirect()->back()->with('success', 'Withdrawal marked as failed and amount refunded.');
     }
-
+/**
+ * Toggle withdrawal lock for a user
+ */
+public function toggleWithdrawalLock($id)
+{
+    $user = User::findOrFail($id);
+    
+    $user->withdrawal_locked = !$user->withdrawal_locked;
+    
+    if ($user->withdrawal_locked) {
+        $user->withdrawal_lock_reason = 'Admin locked withdrawal on ' . now()->toDateTimeString();
+    } else {
+        $user->withdrawal_lock_reason = null;
+    }
+    
+    $user->save();
+    
+    $status = $user->withdrawal_locked ? '🔒 locked' : '🔓 unlocked';
+    
+    return back()->with('success', "User {$user->name}'s withdrawal has been {$status}.");
+}
     // ✅ FIXED: Generate Membership Code
 
 

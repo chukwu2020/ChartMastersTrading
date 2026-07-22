@@ -261,4 +261,4 @@ document.addEventListener('DOMContentLoaded', () => {
         </form>
     </div>
 </div>
-@endsection
+@endsection    

@@ -214,6 +214,16 @@ public function setEndDateAttribute($value)
 }
 
 
+public function hasCompletedRequiredSessions(): bool
+{
+    $required = $this->plan->trading_sessions ?? 0;
+    
+    if ($required <= 0) {
+        return true; // No sessions required
+    }
+    
+    return ($this->completed_sessions ?? 0) >= $required;
+}
 public function calculateActualProfitEarned()
 {
     $totalExpectedProfit = ($this->amount_invested * $this->plan->interest_rate) / 100;

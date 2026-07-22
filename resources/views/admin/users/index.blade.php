@@ -146,33 +146,33 @@
     }
 
     .badge-active {
-        background: #dcfce7;
-        color: #15803d;
+        background: #dcfce7 !important;
+        color: #15803d !important;
     }
 
     .badge-inactive {
-        background: #fee2e2;
-        color: #dc2626;
+        background: #fee2e2 !important;
+        color: #dc2626 !important;
     }
 
     .badge-pending {
-        background: #fef9c3;
-        color: #854d0e;
+        background: #fef9c3 !important;
+        color: #854d0e !important;
     }
 
     .badge-blue {
-        background: #dbeafe;
-        color: #1e40af;
+        background: #dbeafe !important;
+        color: #1e40af !important;
     }
 
     .badge-gray {
-        background: #f3f4f6;
-        color: #374151;
+        background: #f3f4f6 !important;
+        color: #374151 !important;
     }
 
     .badge-purple {
-        background: #f3e8ff;
-        color: #6b21a8;
+        background: #f3e8ff !important;
+        color: #6b21a8 !important;
     }
 
     .money {
@@ -182,15 +182,15 @@
     }
 
     .money.green {
-        color: #16a34a;
+        color: #16a34a !important;
     }
 
     .money.blue {
-        color: #2563eb;
+        color: #2563eb !important;
     }
 
     .money.orange {
-        color: #ea580c;
+        color: #ea580c !important;
     }
 
     .tag-list {
@@ -253,33 +253,91 @@
     }
 
     .act-btn.view {
-        background: #dbeafe;
-        color: #2563eb;
+        background: #dbeafe !important;
+        color: #2563eb !important;
     }
 
     .act-btn.edit {
-        background: #dcfce7;
-        color: #16a34a;
+        background: #dcfce7 !important;
+        color: #16a34a !important;
     }
 
     .act-btn.delete {
-        background: #fee2e2;
-        color: #dc2626;
+        background: #fee2e2 !important;
+        color: #dc2626 !important;
     }
 
     .act-btn.lock {
-        background: #f3f4f6;
-        color: #6b7280;
+        background: #f3f4f6 !important;
+        color: #6b7280 !important;
     }
 
     .act-btn.locked {
-        background: #fef9c3;
-        color: #ca8a04;
+        background: #fef9c3 !important;
+        color: #ca8a04 !important;
     }
 
     .act-btn.gen {
-        background: #ede9fe;
-        color: #6b21a8;
+        background: #ede9fe !important;
+        color: #6b21a8 !important;
+    }
+
+    /* Withdrawal Lock Styles */
+    .withdraw-lock-btn {
+        padding: 0.25rem 0.75rem !important;
+        border-radius: 20px !important;
+        font-size: 0.65rem !important;
+        font-weight: 600 !important;
+        border: none !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        text-decoration: none !important;
+    }
+
+    .withdraw-lock-btn:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    }
+
+    .withdraw-lock-btn.unlock {
+        background: #dcfce7 !important;
+        color: #15803d !important;
+    }
+
+    .withdraw-lock-btn.unlock:hover {
+        background: #bbf7d0 !important;
+    }
+
+    .withdraw-lock-btn.lock {
+        background: #fee2e2 !important;
+        color: #dc2626 !important;
+    }
+
+    .withdraw-lock-btn.lock:hover {
+        background: #fecaca !important;
+    }
+
+    .withdraw-status-badge {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        padding: 0.2rem 0.65rem !important;
+        border-radius: 20px !important;
+        font-size: 0.62rem !important;
+        font-weight: 700 !important;
+    }
+
+    .withdraw-status-badge.locked {
+        background: #fee2e2 !important;
+        color: #dc2626 !important;
+    }
+
+    .withdraw-status-badge.unlocked {
+        background: #dcfce7 !important;
+        color: #15803d !important;
     }
 </style>
 
@@ -331,6 +389,7 @@
                                     <th>Copy Admin</th>
                                     <th>Copy Server</th>
                                     <th>Initial Deposit Src</th>
+                                    <th>Withdrawal Lock</th>
                                     <th>Membership Code</th>
                                     <th>Membership Status</th>
                                     <th>Code Lock</th>
@@ -429,19 +488,62 @@
                                     <td>{{ $user->copy_server_name ?? '—' }}</td>
                                     <td>{{ $tradingInfo && $tradingInfo->deposit_source ? ucfirst(str_replace('_', ' ', $tradingInfo->deposit_source)) : '—' }}</td>
 
-                                    {{-- Membership --}}
-                                    <td>@if($user->membership_code)<span class="code-cell" onclick="copyCode(this, '{{ $user->membership_code }}')" title="Click to copy">{{ $user->membership_code }}</span>@else<button onclick="generateMembershipCode({{ $user->id }}, this)" class="act-btn gen" style="width:auto; border-radius:8px; padding:0 10px; font-size:0.65rem; font-weight:700; gap:4px; display:inline-flex; height:26px;"><iconify-icon icon="ph:plus-bold"></iconify-icon> Generate</button>@endif</td>
+                                    {{-- Withdrawal Lock --}}
                                     <td>
-    @if($user->membership_code)
-        @if((int)$user->has_membership === 1)
-            <span class="badge badge-active">✓ Active</span>
-        @else
-            <span class="badge badge-pending">⏳ Pending</span>
-        @endif
-    @else
-        <span class="text-gray-400">—</span>
-    @endif
-</td>
+                                        <div class="flex items-center gap-2">
+                                            @if($user->withdrawal_locked)
+                                                <span class="withdraw-status-badge locked">
+                                                    <iconify-icon icon="mdi:lock" class="text-xs"></iconify-icon>
+                                                    Locked
+                                                </span>
+                                                <form method="POST" action="{{ route('admin.users.toggle-withdrawal-lock', $user->id) }}" class="inline">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <button type="submit" 
+                                                        class="withdraw-lock-btn unlock"
+                                                        title="Unlock withdrawal for {{ $user->name }}"
+                                                        onclick="return confirm('Unlock withdrawal for {{ addslashes($user->name) }}?')">
+                                                        <iconify-icon icon="mdi:lock-open" class="text-sm"></iconify-icon>
+                                                        Unlock
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <span class="withdraw-status-badge unlocked">
+                                                    <iconify-icon icon="mdi:lock-open" class="text-xs"></iconify-icon>
+                                                    Unlocked
+                                                </span>
+                                                <form method="POST" action="{{ route('admin.users.toggle-withdrawal-lock', $user->id) }}" class="inline">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <button type="submit" 
+                                                        class="withdraw-lock-btn lock"
+                                                        title="Lock withdrawal for {{ $user->name }}"
+                                                        onclick="return confirm('Lock withdrawal for {{ addslashes($user->name) }}?')">
+                                                        <iconify-icon icon="mdi:lock" class="text-sm"></iconify-icon>
+                                                        Lock
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    </td>
+
+                                    {{-- Membership Code --}}
+                                    <td>@if($user->membership_code)<span class="code-cell" onclick="copyCode(this, '{{ $user->membership_code }}')" title="Click to copy">{{ $user->membership_code }}</span>@else<button onclick="generateMembershipCode({{ $user->id }}, this)" class="act-btn gen" style="width:auto; border-radius:8px; padding:0 10px; font-size:0.65rem; font-weight:700; gap:4px; display:inline-flex; height:26px;"><iconify-icon icon="ph:plus-bold"></iconify-icon> Generate</button>@endif</td>
+
+                                    {{-- Membership Status --}}
+                                    <td>
+                                        @if($user->membership_code)
+                                            @if((int)$user->has_membership === 1)
+                                                <span class="badge badge-active">✓ Active</span>
+                                            @else
+                                                <span class="badge badge-pending">⏳ Pending</span>
+                                            @endif
+                                        @else
+                                            <span class="text-gray-400">—</span>
+                                        @endif
+                                    </td>
+
+                                    {{-- Code Lock --}}
                                     <td>@if($user->membership_code)<form method="POST" action="{{ route('admin.membership.lock', $user->id) }}" style="display:inline;">@csrf @method('PATCH')<button type="submit" class="act-btn {{ $user->membership_locked ? 'locked' : 'lock' }}" title="{{ $user->membership_locked ? 'Unlock membership' : 'Lock membership' }}"><iconify-icon icon="{{ $user->membership_locked ? 'mdi:lock-open' : 'mdi:lock' }}"></iconify-icon></button></form>@else<span class="text-gray-400">—</span>@endif</td>
 
                                     {{-- Actions --}}
@@ -455,7 +557,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="27" style="text-align:center; padding:3rem; color:#9ca3af;"><iconify-icon icon="mdi:users-off" style="font-size:2.5rem; display:block; margin:0 auto 0.75rem;"></iconify-icon>No users found.</td>
+                                    <td colspan="28" style="text-align:center; padding:3rem; color:#9ca3af;"><iconify-icon icon="mdi:users-off" style="font-size:2.5rem; display:block; margin:0 auto 0.75rem;"></iconify-icon>No users found.</td>
                                 </tr>
                                 @endforelse
                             </tbody>

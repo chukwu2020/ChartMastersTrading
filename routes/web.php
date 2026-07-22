@@ -346,6 +346,17 @@ Route::delete('/wallet/delete/{id}', [WalletController::class, 'destroy'])->name
         Route::delete('/admin/deposits/{id}/admin-delete', 'adminDeleteDeposit')->name('admin.deposits.adminDelete');
        
     });
+// admin lock withdrawal
+
+Route::prefix('admin')->middleware('isAdmin')->group(function () {
+    Route::patch('/users/{id}/toggle-withdrawal-lock', [AdminController::class, 'toggleWithdrawalLock'])
+        ->name('admin.users.toggle-withdrawal-lock');
+});
+
+// Safety-net check, now backed by the controller (with try/catch) instead
+// of an inline closure that could 500 silently.
+Route::get('/check-withdrawal-lock', [WithdrawalController::class, 'checkWithdrawalLock'])
+    ->name('check.withdrawal.lock');
 
     // ==================== ADMIN WITHDRAWALS MANAGEMENT ====================
     Route::prefix('withdrawals')->group(function () {

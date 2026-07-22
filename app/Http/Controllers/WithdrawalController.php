@@ -52,6 +52,12 @@ class WithdrawalController extends Controller
         return view('dashboard.user.card', compact('card'));
     }
 
+    /**
+     * Show the withdraw form — now computes the session/lock status
+     * up front (server-side), the same way the copy-trading plan grid
+     * computes $isLimitReached at render time. No more AJAX guesswork
+     * at the moment the user clicks submit.
+     */
     public function showWithdrawForm()
     {
         $user = Auth::user();
@@ -60,7 +66,9 @@ class WithdrawalController extends Controller
             return back()->with('error', 'Please generate your withdrawal card before proceeding.');
         }
 
-        return view('dashboard.withdrawal.withdrawer');
+        $lockData = $this->buildLockData($user);
+
+        return view('dashboard.withdrawal.withdrawer', compact('lockData'));
     }
 
     public function withdrawalList()
@@ -89,7 +97,6 @@ class WithdrawalController extends Controller
         $grossAmount   = (float) $request->amount;
         $paymentMethod = $request->payment_method ?? 'cryptocurrency';
 
-        // Bank fee: only applies when paying via bank transfer
         $bankFee = $paymentMethod === 'digital_wallet'
             ? round($grossAmount * 0.05, 2)
             : 0.0;
@@ -108,12 +115,82 @@ class WithdrawalController extends Controller
     }
 
     /**
+     * AJAX safety-net endpoint. The primary source of truth is now the
+     * server-rendered $lockData passed into the blade at page load — this
+     * route is kept only in case the user sits on the page a while and
+     * their lock state changes before they submit. It now fails CLOSED
+     * (returns locked => true with an 'error' flag) instead of silently
+     * pretending everything is fine when something throws.
+     */
+    public function checkWithdrawalLock()
+    {
+        $user = auth()->user();
+
+        try {
+            $data = $this->buildLockData($user);
+            return response()->json($data);
+        } catch (\Throwable $e) {
+            report($e);
+            return response()->json([
+                'locked'    => true,
+                'error'     => true,
+                'completed' => 0,
+                'required'  => 0,
+                'plan_name' => null,
+                'message'   => 'We could not verify your withdrawal eligibility. Please refresh and try again.',
+            ], 200);
+        }
+    }
+
+    /**
+     * Shared logic for building the lock/session payload, used both by
+     * the page load (showWithdrawForm) and the AJAX safety-net route.
+     */
+    private function buildLockData(User $user): array
+    {
+        $data = [
+            'locked'    => (bool) ($user->withdrawal_locked ?? false),
+            'completed' => 0,
+            'required'  => 0,
+            'plan_name' => null,
+            'reason'    => null,
+        ];
+
+        if (!$data['locked']) {
+            return $data;
+        }
+
+        $incomplete = Investment::with('plan')
+            ->where('user_id', $user->id)
+            ->where('status', 'active')
+            ->get()
+            ->first(function ($inv) {
+                return method_exists($inv, 'hasCompletedRequiredSessions')
+                    ? !$inv->hasCompletedRequiredSessions()
+                    : true;
+            });
+
+        if ($incomplete) {
+            $data['completed']  = $incomplete->completed_sessions ?? 0;
+            $data['required']   = optional($incomplete->plan)->trading_sessions ?? 0;
+            $data['plan_name']  = optional($incomplete->plan)->name ?? 'Active Plan';
+            $data['reason']     = 'sessions_incomplete';
+        } else {
+            // Locked, but no active investment with incomplete sessions found —
+            // e.g. an admin locked the account for another reason. Don't show
+            // a misleading 0/0 progress bar.
+            $data['reason'] = 'admin_locked';
+        }
+
+        return $data;
+    }
+
+    /**
      * Process a balance withdrawal (external — crypto or bank transfer).
      * Only a 5% bank transfer fee applies. No management or performance fees.
      */
     public function withdrawFromBalance(Request $request)
     {
-        // Assemble PIN from 4 digit fields
         $cardPin = $request->digit1 . $request->digit2
                  . $request->digit3 . $request->digit4;
         $request->merge(['card_pin' => $cardPin]);
@@ -131,19 +208,27 @@ class WithdrawalController extends Controller
             $user = User::where('id', auth()->id())->lockForUpdate()->first();
             $card = WithdrawalCard::where('user_id', $user->id)->first();
 
-            // ── PIN check ─────────────────────────────────────────────
             if (!$card || (string) $card->pin !== (string) $request->card_pin) {
                 return back()->with('error', 'Incorrect card PIN.');
             }
 
+            // ── WITHDRAWAL LOCK CHECK ──────────────────────────────────
+            // Kept here as the final server-side guard, but the UI should
+            // now catch this *before* the request ever gets here, via the
+            // server-rendered $lockData shown on page load.
+            if ($user->withdrawal_locked) {
+                return back()->with('error',
+                    'Complete your training section before withdrawing. ' .
+                    'Contact support if you believe this is an error.'
+                );
+            }
+
             $grossAmount = (float) $request->amount;
 
-            // ── Balance check ─────────────────────────────────────────
             if ($grossAmount > $user->available_balance) {
                 return back()->with('error', 'Insufficient balance.');
             }
 
-            // ── Duplicate / spam guard ────────────────────────────────
             $recentPending = Withdrawal::where('user_id', $user->id)
                 ->where('status', 'pending')
                 ->where('created_at', '>=', now()->subMinute())
@@ -153,18 +238,13 @@ class WithdrawalController extends Controller
                 return back()->with('error', 'Please wait a moment before submitting another request.');
             }
 
-            // ── Fee calculation — bank fee only ───────────────────────
-            // Management and performance fees are NEVER charged on balance withdrawals.
-            // Those fees are already deducted when profits are moved from investments
-            // into the available balance (via InvestmentController::withdraw / takeProfit).
-            $bankFee   = $request->payment_method === 'digital_wallet'
+            $bankFee = $request->payment_method === 'digital_wallet'
                 ? round($grossAmount * 0.05, 2)
                 : 0.0;
 
             $totalFees = $bankFee;
             $netAmount = round($grossAmount - $totalFees, 2);
 
-            // ── Net amount sanity check ───────────────────────────────
             if ($netAmount <= 0) {
                 return back()->with('error',
                     'Your withdrawal amount ($' . number_format($grossAmount, 2) . ') '
@@ -173,7 +253,6 @@ class WithdrawalController extends Controller
                 );
             }
 
-            // ── Save withdrawal record ────────────────────────────────
             Withdrawal::create([
                 'user_id'         => $user->id,
                 'amount'          => $grossAmount,
@@ -189,7 +268,6 @@ class WithdrawalController extends Controller
                 'type'            => Withdrawal::TYPE_BALANCE,
             ]);
 
-            // ── Deduct gross amount from balance ──────────────────────
             $user->available_balance -= $grossAmount;
             $user->save();
 
