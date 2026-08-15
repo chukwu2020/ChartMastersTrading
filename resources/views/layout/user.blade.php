@@ -271,7 +271,6 @@ window.smartsupp||(function(d) {
 
 
 
-<noscript>Powered by <a href="https://chartmasterscircle.com/" target="_blank">ChartmastersCircle</a></noscript>
 
 
 
