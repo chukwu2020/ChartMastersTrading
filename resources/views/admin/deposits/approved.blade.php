@@ -116,6 +116,16 @@
     .method-pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
     .pill-crypto   { background: #f0f7ed; color: #15803d; border: 1px solid #86efac; }
     .pill-giftcard { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+    .pill-bank     { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+
+    .bank-detail-preview {
+        font-size: 0.75rem;
+        color: #1e40af;
+        background: #eff6ff;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        margin-top: 0.25rem;
+    }
 
     @media (max-width: 768px) {
         .stats-card { padding: 1rem; }
@@ -130,6 +140,69 @@
     .overflow-x-auto::-webkit-scrollbar-thumb { background: var(--primary-green); border-radius: 10px; }
     .overflow-x-auto::-webkit-scrollbar-thumb:hover { background: var(--accent-green); }
 </style>
+
+{{-- Define the helper function ONCE outside the loop --}}
+@php
+    function getCoinTicker($cryptoName) {
+        $name = strtolower(trim($cryptoName ?? ''));
+        $tickerMap = [
+            'bitcoin' => 'btc', 'btc' => 'btc',
+            'ethereum' => 'eth', 'eth' => 'eth', 'etherium' => 'eth', 'etherum' => 'eth',
+            'usdt' => 'usdt', 'tether' => 'usdt',
+            'usdt erc20' => 'usdt', 'usdt trc20' => 'usdt', 'usdt bep20' => 'usdt',
+            'usdc' => 'usdc', 'usdc erc20' => 'usdc', 'usdc trc20' => 'usdc',
+            'busd' => 'busd', 'busd bep20' => 'busd',
+            'bnb' => 'bnb', 'binance' => 'bnb',
+            'solana' => 'sol', 'sol' => 'sol',
+            'xrp' => 'xrp', 'ripple' => 'xrp',
+            'cardano' => 'ada', 'ada' => 'ada',
+            'dogecoin' => 'doge', 'doge' => 'doge', 'dodge' => 'doge',
+            'litecoin' => 'ltc', 'ltc' => 'ltc',
+            'polkadot' => 'dot', 'dot' => 'dot',
+            'polygon' => 'matic', 'matic' => 'matic',
+            'chainlink' => 'link', 'link' => 'link',
+            'avalanche' => 'avax', 'avax' => 'avax',
+            'uniswap' => 'uni', 'uni' => 'uni',
+            'cosmos' => 'atom', 'atom' => 'atom',
+            'stellar' => 'xlm', 'xlm' => 'xlm',
+            'algorand' => 'algo', 'algo' => 'algo',
+            'vechain' => 'vet', 'vet' => 'vet',
+            'shiba inu' => 'shib', 'shib' => 'shib',
+            'tron' => 'trx', 'trx' => 'trx',
+            'near' => 'near', 'fantom' => 'ftm', 'ftm' => 'ftm',
+            'harmony' => 'one', 'one' => 'one',
+            'aptos' => 'apt', 'apt' => 'apt',
+            'arbitrum' => 'arb', 'arb' => 'arb',
+            'optimism' => 'op', 'op' => 'op',
+            'sui' => 'sui',
+        ];
+        if (isset($tickerMap[$name])) return $tickerMap[$name];
+        foreach ($tickerMap as $key => $value) {
+            if (strpos($name, $key) !== false) return $value;
+        }
+        return 'generic';
+    }
+
+    $walletIcons = [
+        'btc' => '₿', 'eth' => 'Ξ', 'usdt' => '₮', 'bnb' => '🟡',
+        'sol' => '◎', 'xrp' => '✕', 'ada' => '₳', 'doge' => 'Ð',
+        'ltc' => 'Ł', 'trx' => '🔺', 'matic' => '⬣', 'dot' => '⚫',
+        'avax' => '🔺', 'link' => '🔗', 'uni' => '🦄', 'atom' => '⚛️',
+        'xlm' => '✨', 'usdc' => '💵', 'busd' => '🟡', 'shib' => '🐕',
+        'near' => '⛰️', 'ftm' => '🔷', 'one' => '1️⃣', 'apt' => '⬡',
+        'arb' => '🔷', 'op' => '🔶', 'sui' => '🌊',
+        'default' => '🔗',
+    ];
+
+    $gcBrandMap = [
+        'amazon'  => 'Amazon',
+        'itunes'  => 'iTunes',
+        'google'  => 'Google Play',
+        'steam'   => 'Steam',
+        'walmart' => 'Walmart',
+        'other'   => 'Other Gift Card',
+    ];
+@endphp
 
 <div class="dashboard-main-body">
     {{-- HEADER --}}
@@ -215,20 +288,28 @@
                                     @php
                                         $isCrypto   = ($deposit->payment_method ?? 'crypto') === 'crypto';
                                         $isGiftCard = ($deposit->payment_method ?? '') === 'giftcard';
+                                        $isBankTransfer = ($deposit->payment_method ?? '') === 'bank_transfer';
 
-                                        $gcBrandMap = [
-                                            'amazon'  => 'Amazon',
-                                            'itunes'  => 'iTunes',
-                                            'google'  => 'Google Play',
-                                            'steam'   => 'Steam',
-                                            'walmart' => 'Walmart',
-                                            'other'   => $deposit->other_card_name
-                                                          ?? $deposit->card_type_label
-                                                          ?? 'Other',
-                                        ];
+                                        $bankDetails = $isBankTransfer ? $deposit->bank_details : null;
+
+                                        // Get coin ticker for crypto
+                                        $ticker = getCoinTicker(optional($deposit->wallet)->crypto_name ?? '');
+                                        $coinIcon = $walletIcons[$ticker] ?? $walletIcons['default'];
+
                                         $gcBrand = $isGiftCard
                                             ? ($gcBrandMap[$deposit->card_type ?? ''] ?? ucfirst($deposit->card_type ?? 'Gift Card'))
                                             : null;
+
+                                        // Method pill class
+                                        $pillClass = 'pill-crypto';
+                                        $pillIcon = 'ph:currency-btc-bold';
+                                        if ($isGiftCard) {
+                                            $pillClass = 'pill-giftcard';
+                                            $pillIcon = 'ph:gift-bold';
+                                        } elseif ($isBankTransfer) {
+                                            $pillClass = 'pill-bank';
+                                            $pillIcon = 'ph:bank-bold';
+                                        }
                                     @endphp
                                     <tr class="hover:bg-gray-50 transition">
                                         <td>
@@ -260,15 +341,18 @@
 
                                         {{-- Method pill --}}
                                         <td>
-                                            @if($isCrypto)
-                                                <span class="method-pill pill-crypto">
-                                                    <iconify-icon icon="ph:currency-btc-bold"></iconify-icon> Crypto
-                                                </span>
-                                            @else
-                                                <span class="method-pill pill-giftcard">
-                                                    <iconify-icon icon="ph:gift-bold"></iconify-icon> Gift Card
-                                                </span>
-                                            @endif
+                                            <span class="method-pill {{ $pillClass }}">
+                                                <iconify-icon icon="{{ $pillIcon }}"></iconify-icon>
+                                                @if($isCrypto)
+                                                    Crypto
+                                                @elseif($isGiftCard)
+                                                    Gift Card
+                                                @elseif($isBankTransfer)
+                                                    Bank Transfer
+                                                @else
+                                                    N/A
+                                                @endif
+                                            </span>
                                         </td>
 
                                         {{-- Payment details --}}
@@ -276,18 +360,7 @@
                                             @if($isCrypto)
                                                 <div class="wallet-info">
                                                     <div class="flex items-center gap-1 mb-1">
-                                                        @php
-                                                            $walletIcons = [
-                                                                'BTC'     => '₿',
-                                                                'ETH'     => '♦️',
-                                                                'USDT'    => '💲',
-                                                                'BNB'     => '🔶',
-                                                                'SOL'     => '◎',
-                                                                'DEFAULT' => '🔗'
-                                                            ];
-                                                            $icon = $walletIcons[strtoupper($deposit->wallet->crypto_name ?? '')] ?? $walletIcons['DEFAULT'];
-                                                        @endphp
-                                                        <span>{{ $icon }}</span>
+                                                        <span>{{ $coinIcon }}</span>
                                                         <strong>{{ $deposit->wallet->crypto_name ?? 'N/A' }}</strong>
                                                     </div>
                                                     @if($deposit->wallet)
@@ -302,7 +375,7 @@
                                                     </div>
                                                     @endif
                                                 </div>
-                                            @else
+                                            @elseif($isGiftCard)
                                                 <div class="gc-info">
                                                     <div class="gc-brand">
                                                         <iconify-icon icon="ph:gift-bold" style="color:#f59e0b;"></iconify-icon>
@@ -310,6 +383,19 @@
                                                     </div>
                                                     @if($deposit->card_code)
                                                         Code: <span class="gc-code">{{ $deposit->card_code }}</span>
+                                                    @endif
+                                                </div>
+                                            @elseif($isBankTransfer)
+                                                <div>
+                                                    <div class="text-xs text-gray-500">Reference:</div>
+                                                    <div class="font-mono text-sm font-bold text-blue-600">
+                                                        {{ $bankDetails['reference_code'] ?? 'N/A' }}
+                                                    </div>
+                                                    @if($bankDetails && isset($bankDetails['bank_name']))
+                                                    <div class="bank-detail-preview">
+                                                        <iconify-icon icon="ph:bank-fill" class="text-green-500"></iconify-icon>
+                                                        <span>{{ $bankDetails['bank_name'] }}</span>
+                                                    </div>
                                                     @endif
                                                 </div>
                                             @endif
