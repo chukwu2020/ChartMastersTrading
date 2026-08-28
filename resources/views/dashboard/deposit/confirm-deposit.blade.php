@@ -1,21 +1,132 @@
-{{-- resources/views/dashboard/deposit/confirm-deposit.blade.php --}}
 @extends('layout.user')
 
 @section('content')
 
-<style>
-    .crypto-icon {
-        width: 24px;
-        height: 24px;
-        margin-right: 8px;
+@php
+    /**
+     * Get the correct crypto ticker/logo for any crypto name
+     * Handles: "USDT ERC20", "USDT TRC20", "Bitcoin", "Ethereum", etc.
+     */
+    function getCryptoTicker($cryptoName) {
+        $name = strtolower(trim($cryptoName));
+        
+        $exactMap = [
+            'bitcoin' => 'btc',
+            'ethereum' => 'eth',
+            'etherium' => 'eth',
+            'etherum' => 'eth',
+            'tether' => 'usdt',
+            'dogecoin' => 'doge',
+            'dodge' => 'doge',
+            'doge' => 'doge',
+            'matic' => 'matic',
+            'polygon' => 'matic',
+            'solana' => 'sol',
+            'ripple' => 'xrp',
+            'cardano' => 'ada',
+            'binance coin' => 'bnb',
+            'binance' => 'bnb',
+            'litecoin' => 'ltc',
+            'tron' => 'trx',
+            'avalanche' => 'avax',
+            'chainlink' => 'link',
+            'uniswap' => 'uni',
+            'cosmos' => 'atom',
+            'stellar' => 'xlm',
+            'algorand' => 'algo',
+            'vechain' => 'vet',
+            'internet computer' => 'icp',
+            'filecoin' => 'fil',
+            'elrond' => 'egld',
+            'theta' => 'theta',
+            'tezos' => 'xtz',
+            'eos' => 'eos',
+            'pancakeswap' => 'cake',
+            'aave' => 'aave',
+            'the graph' => 'grt',
+            'maker' => 'mkr',
+            'compound' => 'comp',
+            'synthetix' => 'snx',
+            'curve' => 'crv',
+            'yearn finance' => 'yfi',
+            'basic attention token' => 'bat',
+            'zcash' => 'zec',
+            'dash' => 'dash',
+            'monero' => 'xmr',
+            'neo' => 'neo',
+            'waves' => 'waves',
+            'hedera' => 'hbar',
+            'near' => 'near',
+            'fantom' => 'ftm',
+            'harmony' => 'one',
+            'usd coin' => 'usdc',
+            'binance usd' => 'busd',
+            'shiba inu' => 'shib',
+            'aptos' => 'apt',
+            'arbitrum' => 'arb',
+            'optimism' => 'op',
+            'sui' => 'sui',
+        ];
+        
+        if (isset($exactMap[$name])) {
+            return $exactMap[$name];
+        }
+        
+        // Handle USDT variants (ERC20, TRC20, BEP20, etc.)
+        if (strpos($name, 'usdt') !== false) {
+            return 'usdt';
+        }
+        
+        // Handle USDC variants
+        if (strpos($name, 'usdc') !== false) {
+            return 'usdc';
+        }
+        
+        // Handle BUSD variants
+        if (strpos($name, 'busd') !== false) {
+            return 'busd';
+        }
+        
+        $firstWord = explode(' ', $name)[0];
+        if (isset($exactMap[$firstWord])) {
+            return $exactMap[$firstWord];
+        }
+        
+        foreach ($exactMap as $key => $ticker) {
+            if (strpos($name, $key) !== false) {
+                return $ticker;
+            }
+        }
+        
+        return $name;
     }
 
+    $supportedCoins = [
+        'btc', 'eth', 'usdt', 'bnb', 'sol', 'xrp', 'ada', 'doge', 'ltc', 'trx',
+        'matic', 'link', 'dot', 'avax', 'uni', 'atom', 'xlm', 'algo', 'vet', 'icp',
+        'fil', 'egld', 'theta', 'xtz', 'eos', 'cake', 'aave', 'grt', 'mkr', 'comp',
+        'snx', 'crv', 'yfi', 'bat', 'zec', 'dash', 'xmr', 'neo', 'waves', 'hbar',
+        'near', 'ftm', 'one', 'usdc', 'busd', 'shib', 'apt', 'arb', 'op', 'sui'
+    ];
+    
+    $cdnBase = 'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/';
+    
+    function getCryptoLogo($cryptoName, $supportedCoins, $cdnBase) {
+        $ticker = getCryptoTicker($cryptoName);
+        if (in_array($ticker, $supportedCoins)) {
+            return $cdnBase . $ticker . '.png';
+        }
+        return $cdnBase . 'generic.png';
+    }
+@endphp
+
+<style>
+    .crypto-icon { width: 24px; height: 24px; margin-right: 8px; }
     .wallet-card {
         border-left: 4px solid #9EDD05;
         background: white;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     }
-
     .time-badge {
         background-color: #f0f7ed;
         color: #0C3A30;
@@ -23,21 +134,7 @@
         padding: 4px 8px;
         border-radius: 12px;
     }
-
-    .partner-logo {
-        width: 40px;
-        height: 40px;
-        object-fit: contain;
-        margin-right: 12px;
-    }
-
-    .wallet-address-container {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 12px;
-        position: relative;
-    }
-
+    .partner-logo { width: 40px; height: 40px; object-fit: contain; margin-right: 12px; }
     .crypto-logo {
         width: 56px;
         height: 56px;
@@ -50,26 +147,18 @@
         overflow: hidden;
         flex-shrink: 0;
     }
-
-    .crypto-logo img {
-        width: 38px;
-        height: 38px;
-        object-fit: contain;
-    }
-
+    .crypto-logo img { width: 38px; height: 38px; object-fit: contain; }
     .partner-card {
         transition: all 0.3s;
         border: 1px solid #e9ecef;
         border-radius: 8px;
         overflow: hidden;
     }
-
     .partner-card:hover {
         border-color: #9EDD05;
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
-
     .alert-warning {
         background-color: #fff3cd;
         border-color: #ffecb5;
@@ -78,29 +167,33 @@
         border-radius: 8px;
         margin-bottom: 16px;
     }
-
+    .alert-danger {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+    }
+    .alert-success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+    }
     .timer-display {
         font-family: 'Courier New', monospace;
         font-weight: bold;
         color: #dc3545;
     }
-
-    .nft-promo-card {
-        position: relative;
-        overflow: hidden;
+    .deposit-summary {
+        background: linear-gradient(135deg, #f8faf7 0%, #eef7ea 100%);
         border-radius: 12px;
-        margin-bottom: 24px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
     }
-
-    .nft-promo-card__inner {
-        position: relative;
-        z-index: 2;
-        background: white;
-        border-radius: 12px;
-        padding: 10px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
-
     .currency-selector {
         border: 2px solid #e5e7eb;
         border-radius: 8px;
@@ -111,11 +204,7 @@
         cursor: pointer;
         transition: all 0.2s ease;
     }
-
-    .currency-selector:hover {
-        border-color: #9EDD05;
-    }
-
+    .currency-selector:hover { border-color: #9EDD05; }
     .currency-display {
         display: inline-flex;
         align-items: center;
@@ -125,65 +214,14 @@
         border-radius: 8px;
         border: 1px solid #e5e7eb;
     }
-
-    .currency-symbol {
-        font-weight: 700;
-        color: #0C3A30;
-    }
-
-    .amount-in-currency {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #059669;
-    }
-
-    .deposit-summary {
-        background: linear-gradient(135deg, #f8faf7 0%, #eef7ea 100%);
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .alert-success {
-        background-color: #d4edda;
-        border-color: #c3e6cb;
-        color: #155724;
-    }
-
-    .alert-danger {
-        background-color: #f8d7da;
-        border-color: #f5c6cb;
-        color: #721c24;
-    }
-
-    .upload-area {
-        transition: all 0.3s ease;
-    }
-
-    .upload-area:hover {
-        border-color: #9EDD05;
-        background-color: #f8faf7;
-    }
-
-    .upload-info {
+    .currency-symbol { font-weight: 700; color: #0C3A30; }
+    .amount-in-currency { font-size: 1.1rem; font-weight: 600; color: #059669; }
+    .wallet-address-container {
+        background: #f8f9fa;
+        border-radius: 8px;
         padding: 12px;
-        border-radius: 10px;
-        text-align: center;
+        position: relative;
     }
-
-    .upload-text {
-        background: #9EDD05;
-        font-size: 16px;
-        color: #6b7280;
-    }
-
-    .upload-subtext {
-        font-size: 12px;
-        color: #9ca3af;
-        margin-top: 4px;
-    }
-
-    /* Back Button */
     .back-btn {
         padding: 0.75rem 2rem;
         border: 2px solid #e5e7eb;
@@ -195,7 +233,6 @@
         text-decoration: none;
         display: inline-block;
     }
-
     .back-btn:hover {
         border-color: #9EDD05;
         background-color: #f9fafb;
@@ -203,12 +240,6 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(158, 221, 5, 0.2);
     }
-
-    .back-btn:active {
-        transform: translateY(0);
-    }
-
-    /* Submit Button */
     .submit-btn {
         padding: 0.75rem 2rem;
         background: linear-gradient(135deg, #9EDD05, #8AC304);
@@ -220,18 +251,12 @@
         cursor: pointer;
         box-shadow: 0 4px 12px rgba(158, 221, 5, 0.2);
     }
-
     .submit-btn:hover:not(:disabled) {
         background: linear-gradient(135deg, #8AC304, #7AB503);
         border-color: #8AC304;
         transform: translateY(-2px);
         box-shadow: 0 6px 16px rgba(158, 221, 5, 0.3);
     }
-
-    .submit-btn:active:not(:disabled) {
-        transform: translateY(0);
-    }
-
     .submit-btn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
@@ -240,7 +265,6 @@
         color: #9ca3af;
         box-shadow: none;
     }
-
     .submit-btn.submitting {
         background: #ffcc00;
         border-color: #ffcc00;
@@ -249,7 +273,6 @@
         position: relative;
         padding-left: 2.5rem;
     }
-
     .submit-btn.submitting::before {
         content: '';
         position: absolute;
@@ -263,42 +286,36 @@
         border-radius: 50%;
         animation: spin 0.8s linear infinite;
     }
-
-    @keyframes spin {
-        to { transform: translateY(-50%) rotate(360deg); }
+    @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
+    .nft-promo-card {
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+        margin-bottom: 24px;
     }
-
-    .submit-btn:not(:disabled) {
-        animation: subtlePulse 2s infinite;
+    .nft-promo-card__inner {
+        position: relative;
+        z-index: 2;
+        background: white;
+        border-radius: 12px;
+        padding: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
-
-    @keyframes subtlePulse {
-        0%, 100% { box-shadow: 0 4px 12px rgba(158, 221, 5, 0.2); }
-        50%       { box-shadow: 0 4px 16px rgba(158, 221, 5, 0.4); }
+    .upload-area {
+        transition: all 0.3s ease;
     }
-
-    .back-btn:focus-visible,
-    .submit-btn:focus-visible {
-        outline: 2px solid #9EDD05;
-        outline-offset: 2px;
+    .upload-area:hover {
+        border-color: #9EDD05;
+        background-color: #f8faf7;
     }
+    .upload-info { padding: 12px; border-radius: 10px; text-align: center; }
+    .upload-text { background: #9EDD05; font-size: 16px; color: #6b7280; }
+    .upload-subtext { font-size: 12px; color: #9ca3af; margin-top: 4px; }
 
     @media (max-width: 640px) {
-        .back-btn, .submit-btn {
-            padding: 0.75rem 1.5rem;
-            font-size: 0.875rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .flex.justify-center.gap-4 {
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-        .back-btn, .submit-btn {
-            width: 100%;
-            text-align: center;
-        }
+        .back-btn, .submit-btn { padding: 0.75rem 1.5rem; font-size: 0.875rem; }
+        .flex.justify-center.gap-4 { flex-direction: column; gap: 0.75rem; }
+        .back-btn, .submit-btn { width: 100%; text-align: center; }
     }
 </style>
 
@@ -343,7 +360,7 @@
     <div id="statusMessages"></div>
 
     @if(!Session::has('deposit_details'))
-        <div class="alert alert-danger">
+        <div class="alert-danger">
             <iconify-icon icon="solar:danger-triangle-outline" class="mr-2"></iconify-icon>
             No deposit session found. Please start a new deposit.
         </div>
@@ -358,46 +375,17 @@
             $amount = $depositDetails['amount_deposited'] ?? 0;
 
             if (!$wallet) {
-                echo '<div class="alert alert-danger"><iconify-icon icon="solar:danger-triangle-outline" class="mr-2"></iconify-icon>Invalid deposit details. Please start again.</div>';
+                echo '<div class="alert-danger"><iconify-icon icon="solar:danger-triangle-outline" class="mr-2"></iconify-icon>Invalid deposit details. Please start again.</div>';
                 echo '<a href="'.route('user.deposit').'" class="btn btn-primary"><iconify-icon icon="solar:arrow-left-linear" class="mr-2"></iconify-icon>Start New Deposit</a>';
                 return;
             }
 
-            // Build crypto logo URL — same logic as deposit.blade.php
-            $supportedCoins = [
-                'btc','eth','usdt','bnb','sol','xrp','ada','doge','ltc','trx',
-                'matic','link','dot','avax','uni','atom','xlm','algo','vet','icp',
-                'fil','egld','theta','xtz','eos','cake','aave','grt','mkr','comp',
-                'snx','crv','yfi','bat','zec','dash','xmr','neo','waves','hbar',
-                'near','ftm','one','usdc','busd','shib','apt','arb','op','sui'
-            ];
-
-            // Map full names / typos → correct CDN ticker
-            $coinNameMap = [
-                'bitcoin'  => 'btc',
-                'ethereum' => 'eth',
-                'etherium' => 'eth',
-                'etherum'  => 'eth',
-                'tether'   => 'usdt',
-                'dogecoin' => 'doge',
-                'dodge'    => 'doge',
-                'doge'     => 'doge',
-                'matic'    => 'matic',
-                'polygon'  => 'matic',
-                'solana'   => 'sol',
-                'ripple'   => 'xrp',
-                'cardano'  => 'ada',
-                'binance'  => 'bnb',
-                'litecoin' => 'ltc',
-                'tron'     => 'trx',
-            ];
-
-            $rawName   = strtolower(trim($wallet->crypto_name));
-            $ticker    = $coinNameMap[$rawName] ?? $rawName;
-            $cdnBase   = 'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/';
-            $logoUrl   = in_array($ticker, $supportedCoins)
-                            ? $cdnBase . $ticker . '.png'
-                            : $cdnBase . 'generic.png';
+            // Get the crypto name and logo using our helper functions
+            $cryptoName = $wallet->crypto_name;
+            $ticker = getCryptoTicker($cryptoName);
+            $logoUrl = in_array($ticker, $supportedCoins) 
+                ? $cdnBase . $ticker . '.png' 
+                : $cdnBase . 'generic.png';
         @endphp
 
         <!-- Session Expiry Warning -->
@@ -426,7 +414,7 @@
             </div>
         </div>
 
-        <!-- Main Content Container -->
+        <!-- Main Content -->
         <div class="nft-promo-card">
             <div class="nft-promo-card__inner p-4">
                 <div class="card rounded-xl p-6 shadow-sm wallet-card"
@@ -446,18 +434,18 @@
                     <div class="flex flex-col gap-6">
                         <div class="flex-1">
 
-                            <!-- Crypto Identity Row — NOW USES REAL LOGO -->
+                            <!-- Crypto Identity Row with CORRECT LOGO -->
                             <div class="flex items-center gap-3 mb-4">
                                 <div class="crypto-logo">
                                     <img
                                         src="{{ $logoUrl }}"
-                                        alt="{{ strtoupper($wallet->crypto_name) }} logo"
+                                        alt="{{ $cryptoName }} logo"
                                         onerror="this.src='{{ $cdnBase }}generic.png'"
                                     >
                                 </div>
                                 <div>
-                                    <h4 class="font-bold text-lg">{{ strtoupper($wallet->crypto_name) }} Wallet</h4>
-                                    <p class="text-sm text-gray-500">Send only {{ strtoupper($wallet->crypto_name) }} to this address</p>
+                                    <h4 class="font-bold text-lg">{{ $cryptoName }}</h4>
+                                    <p class="text-sm text-gray-500">Send only {{ $cryptoName }} to this address</p>
                                 </div>
                             </div>
 
@@ -492,7 +480,6 @@
                                         <iconify-icon icon="solar:arrow-right-linear" class="text-gray-400 ml-auto"></iconify-icon>
                                     </div>
                                 </a>
-
                                 <a href="https://trustwallet.com/" target="_blank" rel="noopener noreferrer" class="partner-card p-3">
                                     <div class="flex items-center">
                                         <img id="trustWalletLogo" src="" alt="Trust Wallet" class="partner-logo">
@@ -572,9 +559,7 @@
         setupFormSubmission();
     });
 
-    // ----------------------------------------
     // FIAT CONVERSION
-    // ----------------------------------------
     async function fetchFiatRates() {
         try {
             const response = await fetch('https://v6.exchangerate-api.com/v6/a8e67b756f551b68d4ada293/latest/USD');
@@ -602,26 +587,20 @@
     }
 
     function updateCurrencyDisplay() {
-        const rate   = fiatRates[currentCurrency] || 1;
+        const rate = fiatRates[currentCurrency] || 1;
         const symbol = getCurrencySymbol(currentCurrency);
         document.getElementById('currencySymbolDisplay').textContent = symbol;
-        document.getElementById('amountInCurrency').textContent = formatNumber(CONFIG.amountUSD * rate);
+        document.getElementById('amountInCurrency').textContent = (CONFIG.amountUSD * rate).toFixed(2);
     }
 
-    function formatNumber(num) {
-        return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-
-    // ----------------------------------------
     // FILE UPLOAD
-    // ----------------------------------------
     function handleFileSelect(input) {
-        const file      = input.files[0];
+        const file = input.files[0];
         const submitBtn = document.getElementById('submitBtn');
 
         if (file && validateFile(file)) {
             submitBtn.disabled = false;
-            const uploadArea   = document.querySelector('.upload-area');
+            const uploadArea = document.querySelector('.upload-area');
             uploadArea.innerHTML = `
                 <iconify-icon icon="solar:check-circle-bold" class="text-3xl text-green-500 mb-2"></iconify-icon>
                 <p class="text-sm text-gray-700">${file.name}</p>
@@ -648,7 +627,7 @@
     function showMessage(message, type = 'info') {
         const statusDiv = document.getElementById('statusMessages');
         if (!statusDiv) return;
-        const cls  = type === 'success' ? 'alert-success' : 'alert-danger';
+        const cls = type === 'success' ? 'alert-success' : 'alert-danger';
         const icon = type === 'success' ? 'check-circle' : 'danger-triangle';
         statusDiv.innerHTML = `
             <div class="${cls} p-3 rounded-lg mb-4 flex items-center">
@@ -659,26 +638,22 @@
         setTimeout(() => { statusDiv.innerHTML = ''; }, 5000);
     }
 
-    // ----------------------------------------
     // COPY ADDRESS
-    // ----------------------------------------
     function copyToClipboard(text, btn) {
         navigator.clipboard.writeText(text).then(() => {
             const span = btn.querySelector('.copy-text');
-            span.textContent        = 'Copied!';
+            span.textContent = 'Copied!';
             btn.style.backgroundColor = '#28a745';
-            btn.style.color           = 'white';
+            btn.style.color = 'white';
             setTimeout(() => {
-                span.textContent        = 'Copy';
+                span.textContent = 'Copy';
                 btn.style.backgroundColor = '';
-                btn.style.color           = '';
+                btn.style.color = '';
             }, 2000);
         }).catch(() => showMessage('Failed to copy address', 'error'));
     }
 
-    // ----------------------------------------
     // TIMER
-    // ----------------------------------------
     function initializeTimers() {
         let timeLeft = CONFIG.sessionDuration;
 
@@ -705,23 +680,19 @@
         setInterval(tick, 1000);
     }
 
-    // ----------------------------------------
     // PARTNER LOGOS
-    // ----------------------------------------
     function loadPartnerLogos() {
-        const bybitLogo       = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iI0Y3OTMxRSIvPgo8dGV4dCB4PSIyMCIgeT0iMjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjEwIiBmb250LXdlaWdodD0iYm9sZCI+Qnl8Qml0PC90ZXh0Pgo8L3N2Zz4K";
+        const bybitLogo = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iI0Y3OTMxRSIvPgo8dGV4dCB4PSIyMCIgeT0iMjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjEwIiBmb250LXdlaWdodD0iYm9sZCI+Qnl8Qml0PC90ZXh0Pgo8L3N2Zz4K";
         const trustWalletLogo = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iMjAiIGZpbGw9IiMzMzc1QkIiLz4KPHR5cGUgdGV4dD0iVFciIHg9IjIwIiB5PSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtd2VpZ2h0PSJib2xkIi8+Cjwvc3ZnPgo=";
-        const bybitEl         = document.getElementById('bybitLogo');
-        const trustEl         = document.getElementById('trustWalletLogo');
-        if (bybitEl) bybitEl.src     = bybitLogo;
-        if (trustEl) trustEl.src     = trustWalletLogo;
+        const bybitEl = document.getElementById('bybitLogo');
+        const trustEl = document.getElementById('trustWalletLogo');
+        if (bybitEl) bybitEl.src = bybitLogo;
+        if (trustEl) trustEl.src = trustWalletLogo;
     }
 
-    // ----------------------------------------
     // FORM SUBMISSION
-    // ----------------------------------------
     function setupFormSubmission() {
-        const form      = document.getElementById('depositForm');
+        const form = document.getElementById('depositForm');
         const submitBtn = document.getElementById('submitBtn');
         form.addEventListener('submit', function (e) {
             if (!document.getElementById('proof').files.length) {
@@ -729,8 +700,8 @@
                 showMessage('Please upload payment proof screenshot', 'error');
                 return false;
             }
-            submitBtn.disabled   = true;
-            submitBtn.innerHTML  = 'Processing...';
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Processing...';
         });
     }
 </script>

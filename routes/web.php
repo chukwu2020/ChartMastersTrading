@@ -195,9 +195,16 @@ Route::post('/investments/{id}/take-profit', [InvestmentController::class, 'take
             Route::get('/confirm-deposit', 'confirmDeposit')->name('deposit.confirm');
             Route::post('/submit-deposit', 'submitDeposit')->name('deposit.submit');
             Route::get('/deposit-history', 'depositHistory')->name('user.deposit-history');
-            
+            // routes/web.php - Add these inside the auth middleware group
 
-        });
+
+  
+    Route::post('/bank-transfer-request', [DepositController::class, 'requestBankTransfer'])->name('bank.transfer.request');
+    Route::get('/bank-transfer-status', [DepositController::class, 'checkBankTransferStatus'])->name('bank.transfer.status');
+    Route::post('/bank-transfer-submit-proof', [DepositController::class, 'submitBankTransferProof'])->name('bank.transfer.submit-proof');
+
+
+
 Route::post('/deposit/giftcard', [DepositController::class, 'submitGiftCard'])->name('deposit.giftcard.submit');
 
         // Reinvestment
@@ -327,7 +334,14 @@ Route::delete('/wallet/delete/{id}', [WalletController::class, 'destroy'])->name
     Route::post('/payouts/quick-add', [AdminController::class, 'quickAdd'])->name('admin.payouts.quick-add');
 
     });
-
+    
+// Admin Bank Transfer Routes
+Route::prefix('admin/bank-transfers')->middleware(['auth', 'isAdmin'])->group(function () {
+    Route::get('/notifications', [AdminController::class, 'getBankTransferNotifications'])->name('admin.bank-transfers.notifications');
+    Route::get('/', [AdminController::class, 'bankTransferRequests'])->name('admin.bank-transfers.requests');
+    Route::get('/{depositId}/send-details', [AdminController::class, 'showSendBankDetailsForm'])->name('admin.bank-transfers.send-details');
+    Route::post('/{depositId}/send-details', [AdminController::class, 'sendBankDetails'])->name('admin.bank-transfers.send-details.post');
+});
     // ==================== ADMIN USERS MANAGEMENT ====================
     Route::prefix('users')->group(function () {
         Route::get('/', [AdminController::class, 'userIndex'])->name('user.index');
@@ -437,4 +451,8 @@ Route::prefix('admin/strategies')->name('admin.strategies.')->middleware('isAdmi
     Route::get('/{id}/enrollments', [AdminController::class, 'strategyenrollments'])->name('strategyenrollments');
 });
 
+
 });
+});
+
+

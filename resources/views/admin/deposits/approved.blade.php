@@ -111,14 +111,12 @@
         overflow: hidden;
     }
 
-    /* ── Gift card detail — only new styles added ── */
     .gc-info .gc-brand { font-weight: 700; color: #92400e; display: flex; align-items: center; gap: 4px; font-size: 0.82rem; margin-bottom: 2px; }
     .gc-info .gc-code  { font-family: monospace; font-size: 0.72rem; background: #fef9c3; border: 1px solid #fde047; border-radius: 4px; padding: 1px 6px; color: #374151; display: inline-block; }
     .method-pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
     .pill-crypto   { background: #f0f7ed; color: #15803d; border: 1px solid #86efac; }
     .pill-giftcard { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
 
-    /* Responsive */
     @media (max-width: 768px) {
         .stats-card { padding: 1rem; }
         .stats-card p:last-child { font-size: 1.25rem; }
@@ -356,14 +354,14 @@
                                         </td>
 
                                         <td>
-    <form action="{{ route('admin.deposits.adminDelete', $deposit->id) }}" method="POST" onsubmit="return confirm('Remove this deposit from your view? The user will still see it as approved.');">
-        @csrf
-        @method('DELETE')
-        <button type="submit" class="text-red-500 hover:text-red-700" title="Delete from admin view">
-            <iconify-icon icon="ph:trash-fill" class="text-lg"></iconify-icon>
-        </button>
-    </form>
-</td>
+                                            <form action="{{ route('admin.deposits.adminDelete', $deposit->id) }}" method="POST" onsubmit="return confirm('Remove this deposit from your view? The user will still see it as approved.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-500 hover:text-red-700" title="Delete from admin view">
+                                                    <iconify-icon icon="ph:trash-fill" class="text-lg"></iconify-icon>
+                                                </button>
+                                            </form>
+                                        </td>
                                     </tr>
                                     @endforeach
                                 </tbody>

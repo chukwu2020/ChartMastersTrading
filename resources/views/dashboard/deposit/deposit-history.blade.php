@@ -77,15 +77,14 @@
         border: 1px solid #f87171;
     }
 
-    .stat-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
+    .badge-bank-pending {
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        color: #1e40af;
         padding: 0.25rem 0.75rem;
-        background: #f3f4f6;
-        border-radius: 20px;
-        font-size: 0.7rem;
-        color: #4b5563;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: 1px solid #60a5fa;
     }
 
     .empty-state {
@@ -129,17 +128,54 @@
         color: var(--dark-green);
     }
 
-    .summary-card {
-        background: linear-gradient(135deg, #f8faf7, #eef7ea);
-        border-radius: 16px;
-        padding: 1.5rem;
-        border-left: 4px solid var(--primary-green);
+    .method-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
     }
 
-    @media (max-width: 640px) {
-        .deposit-card {
-            padding: 1.25rem;
-        }
+    .pill-crypto {
+        background: #f0f7ed;
+        color: #15803d;
+        border: 1px solid #86efac;
+    }
+
+    .pill-giftcard {
+        background: #fef9c3;
+        color: #854d0e;
+        border: 1px solid #fde047;
+    }
+
+    .pill-bank {
+        background: #dbeafe;
+        color: #1e40af;
+        border: 1px solid #93c5fd;
+    }
+
+    .bank-detail-item {
+        font-size: 0.75rem;
+        padding: 0.25rem 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .bank-detail-item:last-child {
+        border-bottom: none;
+    }
+
+    .bank-detail-label {
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .bank-detail-value {
+        font-weight: 600;
+        color: #0C3A30;
+        font-family: monospace;
+        font-size: 0.8rem;
     }
 </style>
 
@@ -222,48 +258,36 @@
                                 default    => 'ph:clock-fill',
                             };
 
-                            /* ── Resolve payment method display ──────────────────
-                             * payment_method column values: 'crypto' | 'giftcard'
-                             * Old rows with no payment_method default to crypto.
-                             */
                             $method = $deposit->payment_method ?? 'crypto';
 
-                            /* Crypto: show coin icon + coin name */
-                          $walletIcons = [
-    'BTC'  => '₿',     // Bitcoin
-    'ETH'  => 'Ξ',     // Ethereum (official symbol)
-    'USDT' => '₮',     // Tether
-    'BNB'  => '🟡',     // Binance (closest visual match)
-    'SOL'  => '◎',     // Solana-style symbol
-    'XRP'  => '✕',     // XRP
-    'ADA'  => '₳',     // Cardano
-    'DOGE' => 'Ð',     // Dogecoin
-    'LTC'  => 'Ł',     // Litecoin
-    'TRX'  => '🔺',     // Tron
-    'MATIC'=> '⬣',     // Polygon
-    'DOT'  => '⚫',     // Polkadot
-    'AVAX' => '🔺',     // Avalanche
-    'LINK' => '🔗',     // Chainlink
-    'UNI'  => '🦄',     // Uniswap
-    'ATOM' => '⚛️',     // Cosmos
-    'XLM'  => '✨',     // Stellar
-    'DEFAULT' => '🔗',  // fallback (much better than 🔗)
-];
+                            $isBankTransfer = $method === 'bank_transfer';
+                            $bankDetails = $isBankTransfer ? $deposit->bank_details : null;
 
-                            /* Gift card: resolve the brand name to display */
-                            $gcBrandMap = [
-                                'amazon'  => 'Amazon',
-                                'itunes'  => 'iTunes',
-                                'google'  => 'Google Play',
-                                'steam'   => 'Steam',
-                                'walmart' => 'Walmart',
-                                'other'   => $deposit->other_card_name
-                                                ?? $deposit->card_type_label
-                                                ?? 'Gift Card',
+                            $walletIcons = [
+                                'BTC'  => '₿', 'ETH'  => 'Ξ', 'USDT' => '₮', 'BNB'  => '🟡',
+                                'SOL'  => '◎', 'XRP'  => '✕', 'ADA'  => '₳', 'DOGE' => 'Ð',
+                                'LTC'  => 'Ł', 'TRX'  => '🔺', 'MATIC'=> '⬣', 'DOT'  => '⚫',
+                                'AVAX' => '🔺', 'LINK' => '🔗', 'UNI'  => '🦄', 'ATOM' => '⚛️',
+                                'XLM'  => '✨', 'DEFAULT' => '🔗',
                             ];
 
-                            $gcBrand = $gcBrandMap[$deposit->card_type ?? '']
-                                       ?? ucfirst($deposit->card_type ?? 'Gift Card');
+                            $gcBrandMap = [
+                                'amazon'  => 'Amazon', 'itunes'  => 'iTunes',
+                                'google'  => 'Google Play', 'steam'   => 'Steam',
+                                'walmart' => 'Walmart', 'other'   => $deposit->other_card_name ?? $deposit->card_type_label ?? 'Gift Card',
+                            ];
+
+                            $gcBrand = $gcBrandMap[$deposit->card_type ?? ''] ?? ucfirst($deposit->card_type ?? 'Gift Card');
+
+                            $pillClass = 'pill-crypto';
+                            $pillIcon = 'ph:currency-btc-bold';
+                            if ($method === 'giftcard') {
+                                $pillClass = 'pill-giftcard';
+                                $pillIcon = 'ph:gift-bold';
+                            } elseif ($method === 'bank_transfer') {
+                                $pillClass = 'pill-bank';
+                                $pillIcon = 'ph:bank-bold';
+                            }
                         @endphp
 
                         <div class="deposit-card" data-status="{{ $status }}">
@@ -297,38 +321,63 @@
                                 </div>
                                 @endif
 
-                                <!-- Method row — handles both crypto and gift card -->
                                 <div class="flex justify-between items-center">
                                     <span class="text-gray-500">Method:</span>
-                                    <span class="font-medium text-gray-800 flex items-center gap-1">
-
+                                    <span class="method-pill {{ $pillClass }}">
+                                        <iconify-icon icon="{{ $pillIcon }}" class="text-xs"></iconify-icon>
                                         @if($method === 'crypto')
                                             @php
                                                 $cryptoName = optional($deposit->wallet)->crypto_name;
-                                                $coinIcon   = $walletIcons[strtoupper($cryptoName ?? '')] ?? $walletIcons['DEFAULT'];
                                             @endphp
-                                            <span>{{ $coinIcon }}</span>
                                             {{ $cryptoName ?? 'Crypto' }}
-
                                         @elseif($method === 'giftcard')
-                                            <iconify-icon icon="ph:gift-bold" style="color:#f59e0b;"></iconify-icon>
                                             {{ $gcBrand }} Gift Card
-
+                                        @elseif($method === 'bank_transfer')
+                                            Bank Transfer
                                         @else
-                                            <span>🔗</span> N/A
+                                            N/A
                                         @endif
-
                                     </span>
                                 </div>
 
-                                {{-- For gift cards: show the redemption code (masked) --}}
+                                @if($isBankTransfer && $bankDetails)
+                                <div class="bg-blue-50 rounded-lg p-3 mt-2">
+                                    <p class="text-xs font-semibold text-blue-700 mb-2">Bank Account Details</p>
+                                    <div class="space-y-1">
+                                        @if($bankDetails['bank_name'] ?? false)
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-xs text-gray-500">Bank:</span>
+                                            <span class="text-xs font-medium text-gray-800">{{ $bankDetails['bank_name'] }}</span>
+                                        </div>
+                                        @endif
+                                        @if($bankDetails['account_name'] ?? false)
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-xs text-gray-500">Account:</span>
+                                            <span class="text-xs font-medium text-gray-800">{{ $bankDetails['account_name'] }}</span>
+                                        </div>
+                                        @endif
+                                        @if($bankDetails['account_number'] ?? false)
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-xs text-gray-500">Account #:</span>
+                                            <span class="text-xs font-mono font-medium text-gray-800">{{ $bankDetails['account_number'] }}</span>
+                                        </div>
+                                        @endif
+                                        @if($bankDetails['reference_code'] ?? false)
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-xs text-gray-500">Reference:</span>
+                                            <span class="text-xs font-mono font-bold text-blue-700">{{ $bankDetails['reference_code'] }}</span>
+                                        </div>
+                                        @endif
+                                    </div>
+                                </div>
+                                @endif
+
                                 @if($method === 'giftcard' && $deposit->card_code)
                                 <div class="flex justify-between items-center">
                                     <span class="text-gray-500">Card Code:</span>
-                                 <span class="font-mono text-xs text-gray-600"
-      style="background:#f3f4f6;padding:2px 8px;border-radius:6px;">
-    {{ $deposit->card_code }}
-</span>
+                                    <span class="font-mono text-xs text-gray-600" style="background:#f3f4f6;padding:2px 8px;border-radius:6px;">
+                                        {{ $deposit->card_code }}
+                                    </span>
                                 </div>
                                 @endif
 
@@ -352,7 +401,6 @@
                                 @endif
                             </div>
 
-                            <!-- Transaction Hash (crypto only) -->
                             @if($deposit->tx_hash)
                             <div class="mt-3 pt-3 border-t border-gray-100">
                                 <p class="text-xs text-gray-400 mb-1">Transaction Hash</p>
@@ -366,7 +414,15 @@
                             </div>
                             @endif
 
-                            <!-- Rejection reason -->
+                            @if($isBankTransfer && $deposit->status == 0)
+                            <div class="mt-3 pt-3 border-t border-gray-100">
+                                <div class="flex items-center gap-2 text-xs text-blue-600">
+                                    <iconify-icon icon="ph:clock-fill"></iconify-icon>
+                                    <span>Awaiting admin approval after transfer</span>
+                                </div>
+                            </div>
+                            @endif
+
                             @if($deposit->status == 2 && $deposit->rejection_note)
                             <div class="mt-4 bg-red-50 border border-red-200 rounded-xl p-3">
                                 <div class="flex items-start gap-2">
@@ -379,13 +435,12 @@
                             </div>
                             @endif
 
-                            <!-- View proof / card image -->
                             @if($deposit->proof)
                             <div class="mt-4 pt-3 border-t border-gray-100">
                                 <button onclick="viewProof('{{ asset('storage/'.$deposit->proof) }}')" 
                                         class="text-xs text-[#9EDD05] hover:text-[#8AC304] font-semibold flex items-center gap-1">
                                     <iconify-icon icon="ph:eye"></iconify-icon>
-                                    {{ $method === 'giftcard' ? 'View Gift Card' : 'View Proof' }}
+                                    {{ $method === 'giftcard' ? 'View Gift Card' : ($method === 'bank_transfer' ? 'View Transfer Proof' : 'View Proof') }}
                                 </button>
                             </div>
                             @endif
@@ -511,4 +566,5 @@
         if (event.target === noteModal)  closeNoteModal();
     });
 </script>
+
 @endsection

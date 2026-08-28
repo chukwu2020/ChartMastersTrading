@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-
+use App\Mail\BankTransferDetailsMail;
+use App\Models\BankTransfer;
 use App\Models\ContactUSMessage;
 use App\Models\CopyTradingRequest;
 use Illuminate\Support\Facades\Log;
@@ -27,7 +28,7 @@ use Carbon\Carbon;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -35,7 +36,7 @@ use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
-public function userIndex(Request $request)
+    public function userIndex(Request $request)
     {
         $query = User::with([
             'investments',
@@ -107,34 +108,41 @@ public function userIndex(Request $request)
         return view('admin.users.edit', compact('user'));
     }
 
-    public function pendingDeposits()
-    {
-        $deposits = Deposit::with('user', 'plan', 'wallet')
-            ->where('status', 0)
-            ->orderBy('created_at', 'desc')
-            ->get();
 
-        return view('admin.deposits.pending', compact('deposits'));
-    }
-
-  
-public function approvedDeposits()
+   public function pendingDeposits()
 {
-    $deposits = Deposit::with(['user', 'plan', 'wallet'])
-        ->where('status', 1)
-        ->where('admin_deleted', 0)   // <-- added
+    $deposits = Deposit::with(['user', 'plan', 'wallet', 'bankTransfer'])
+        ->where('status', 0)
+        ->where(function($query) {
+            $query->where('payment_method', '!=', 'bank_transfer')
+                  ->orWhere(function($q) {
+                      $q->where('payment_method', 'bank_transfer')
+                        ->whereNotNull('proof');
+                  });
+        })
         ->orderBy('created_at', 'desc')
         ->get();
 
-    return view('admin.deposits.approved', compact('deposits'));
+    return view('admin.deposits.pending', compact('deposits'));
 }
-public function adminDeleteDeposit($id)
-{
-    $deposit = Deposit::findOrFail($id);
-    $deposit->update(['admin_deleted' => true]);
 
-    return back()->with('success', 'Deposit removed from admin view.');
-}
+    public function approvedDeposits()
+    {
+        $deposits = Deposit::with(['user', 'plan', 'wallet'])
+            ->where('status', 1)
+            ->where('admin_deleted', 0)   // <-- added
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('admin.deposits.approved', compact('deposits'));
+    }
+    public function adminDeleteDeposit($id)
+    {
+        $deposit = Deposit::findOrFail($id);
+        $deposit->update(['admin_deleted' => true]);
+
+        return back()->with('success', 'Deposit removed from admin view.');
+    }
     public function rejectDeposit(Request $request, $id)
     {
         $request->validate([
@@ -252,27 +260,27 @@ public function adminDeleteDeposit($id)
 
         return redirect()->back()->with('success', 'Withdrawal marked as failed and amount refunded.');
     }
-/**
- * Toggle withdrawal lock for a user
- */
-public function toggleWithdrawalLock($id)
-{
-    $user = User::findOrFail($id);
-    
-    $user->withdrawal_locked = !$user->withdrawal_locked;
-    
-    if ($user->withdrawal_locked) {
-        $user->withdrawal_lock_reason = 'Admin locked withdrawal on ' . now()->toDateTimeString();
-    } else {
-        $user->withdrawal_lock_reason = null;
+    /**
+     * Toggle withdrawal lock for a user
+     */
+    public function toggleWithdrawalLock($id)
+    {
+        $user = User::findOrFail($id);
+
+        $user->withdrawal_locked = !$user->withdrawal_locked;
+
+        if ($user->withdrawal_locked) {
+            $user->withdrawal_lock_reason = 'Admin locked withdrawal on ' . now()->toDateTimeString();
+        } else {
+            $user->withdrawal_lock_reason = null;
+        }
+
+        $user->save();
+
+        $status = $user->withdrawal_locked ? '🔒 locked' : '🔓 unlocked';
+
+        return back()->with('success', "User {$user->name}'s withdrawal has been {$status}.");
     }
-    
-    $user->save();
-    
-    $status = $user->withdrawal_locked ? '🔒 locked' : '🔓 unlocked';
-    
-    return back()->with('success', "User {$user->name}'s withdrawal has been {$status}.");
-}
     // ✅ FIXED: Generate Membership Code
 
 
@@ -1665,4 +1673,123 @@ public function toggleWithdrawalLock($id)
 
         return view('admin.strategies.enrollments', compact('strategy', 'enrollments'));
     }
+
+
+
+
+    // Add these methods to your AdminController.php
+
+// ─────────────────────────────────────────
+// GET BANK TRANSFER NOTIFICATIONS
+// ─────────────────────────────────────────
+public function getBankTransferNotifications()
+{
+    $pendingCount = BankTransfer::where('status', 'pending')
+        ->where('expires_at', '>', now())
+        ->count();
+
+    return response()->json([
+        'count' => $pendingCount,
+        'has_pending' => $pendingCount > 0,
+    ]);
+}
+
+// ─────────────────────────────────────────
+// SHOW BANK TRANSFER REQUESTS
+// ─────────────────────────────────────────
+public function bankTransferRequests()
+{
+    $bankTransfers = BankTransfer::with(['user', 'deposit'])
+        ->whereIn('status', ['pending', 'details_sent'])
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+    $pendingCount = $bankTransfers->where('status', 'pending')->count();
+
+    return view('admin.bank-transfers.index', compact('bankTransfers', 'pendingCount'));
+}
+
+// ─────────────────────────────────────────
+// SHOW SEND BANK DETAILS FORM
+// ─────────────────────────────────────────
+public function showSendBankDetailsForm($bankTransferId)
+{
+    $bankTransfer = BankTransfer::with('user')->findOrFail($bankTransferId);
+
+    return view('admin.bank-transfers.send-details', compact('bankTransfer'));
+}
+
+// ─────────────────────────────────────────
+// SEND BANK DETAILS (Admin submits the form)
+// ─────────────────────────────────────────
+public function sendBankDetails(Request $request, $bankTransferId)
+{
+    $request->validate([
+        'bank_name' => 'required|string|max:255',
+        'account_name' => 'required|string|max:255',
+        'account_number' => 'required|string|max:255',
+        'swift_code' => 'nullable|string|max:50',
+        'routing_number' => 'nullable|string|max:50',
+        'iban' => 'nullable|string|max:50',
+        'sort_code' => 'nullable|string|max:50',
+        'bank_address' => 'nullable|string|max:500',
+        'instructions' => 'nullable|string|max:1000',
+    ]);
+
+    $bankTransfer = BankTransfer::with('user')->findOrFail($bankTransferId);
+
+    // Create deposit NOW (when admin sends details)
+    $deposit = Deposit::create([
+        'user_id' => $bankTransfer->user_id,
+        'amount_deposited' => $bankTransfer->amount,
+        'payment_method' => 'bank_transfer',
+        'status' => 0,
+        'bank_details' => [
+            'bank_name' => $request->bank_name,
+            'account_name' => $request->account_name,
+            'account_number' => $request->account_number,
+            'swift_code' => $request->swift_code,
+            'routing_number' => $request->routing_number,
+            'iban' => $request->iban,
+            'sort_code' => $request->sort_code,
+            'bank_address' => $request->bank_address,
+            'instructions' => $request->instructions,
+            'sent_by_admin' => auth()->id(),
+            'sent_at' => now()->toDateTimeString(),
+        ],
+        'bank_details_sent_at' => now(),
+    ]);
+
+    $bankTransfer->update([
+        'deposit_id' => $deposit->id,
+        'status' => 'details_sent',
+        'bank_details_sent_at' => now(),
+    ]);
+
+    // Send email to user with bank details
+    try {
+        Mail::to($bankTransfer->user->email)->send(new BankTransferDetailsMail(
+            $bankTransfer->user,
+            $bankTransfer,
+            $bankTransfer->amount,
+            $request->all()
+        ));
+    } catch (\Exception $e) {
+        Log::error('Failed to send bank transfer details email: ' . $e->getMessage());
+    }
+
+    // Notify user
+    try {
+        $bankTransfer->user->notify(new TransactionNotification(
+            'Bank Details Received',
+            'Bank details for your deposit of $' . number_format($bankTransfer->amount, 2) . ' have been sent. 
+            Please check your email and make the transfer.'
+        ));
+    } catch (\Exception $e) {
+        Log::error('Notification failed: ' . $e->getMessage());
+    }
+
+    return redirect()->route('admin.bank-transfers.requests')
+        ->with('success', 'Bank details sent to user successfully!');
+}
 }
