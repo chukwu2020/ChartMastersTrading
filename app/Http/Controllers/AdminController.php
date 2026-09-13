@@ -221,45 +221,36 @@ class AdminController extends Controller
         return view('admin.deposits.withdrawal_approved', compact('approvedWithdrawals', 'withdrawalCards'));
     }
 
-    public function unapproveBalanceWithdrawal(Request $request, $id)
-    {
-        $request->validate([
-            'admin_note' => 'required|string|max:500',
-        ]);
+// app/Http/Controllers/AdminController.php
 
-        $withdrawal = Withdrawal::findOrFail($id);
+public function unapproveBalanceWithdrawal(Request $request, $id)
+{
+    $request->validate([
+        'admin_note' => 'required|string|max:500',
+    ]);
 
-        // Check if already rejected/failed
+    return DB::transaction(function () use ($request, $id) {
+
+        $withdrawal = Withdrawal::where('id', $id)->lockForUpdate()->firstOrFail();
+
         if ($withdrawal->status !== 'approved') {
-            return back()->with('error', 'This withdrawal has already been processed.');
+            return back()->with('error', 'Only approved withdrawals can be marked as failed.');
         }
 
-        DB::transaction(function () use ($request, $withdrawal) {
-            // Refund the amount back to user's balance
-            $user = $withdrawal->user;
+        $withdrawal->status     = 'failed';          // <-- MUST be 'failed'
+        $withdrawal->admin_note = $request->admin_note;
+        $withdrawal->save();
+
+        // Refund the money back to the user
+        $user = $withdrawal->user;
+        if ($user) {
             $user->available_balance += $withdrawal->amount;
             $user->save();
+        }
 
-            // Mark as rejected (which will show as "Failed" to users)
-            $withdrawal->status = 'rejected';
-            $withdrawal->admin_note = $request->admin_note;
-            $withdrawal->save();
-
-            // Send notification to user
-            try {
-                $user->notify(new TransactionNotification(
-                    'Withdrawal Failed',
-                    'Your withdrawal request of $' . number_format($withdrawal->amount, 2) .
-                        ' has failed. Reason: ' . $request->admin_note . "\n" .
-                        'Funds have been returned to your balance.'
-                ));
-            } catch (\Exception $e) {
-                \Log::error('Notification failed: ' . $e->getMessage());
-            }
-        });
-
-        return redirect()->back()->with('success', 'Withdrawal marked as failed and amount refunded.');
-    }
+        return back()->with('success', 'Withdrawal marked as failed and balance restored.');
+    });
+}
     /**
      * Toggle withdrawal lock for a user
      */
@@ -410,29 +401,48 @@ class AdminController extends Controller
         return view('admin.deposits.withdrawal_pending', compact('withdrawals'));
     }
 
-    public function approveBalanceWithdrawal($id)
-    {
-        $withdrawal = Withdrawal::findOrFail($id);
-
-        if ($withdrawal->status === 'approved') {
-            return back()->with('error', 'This withdrawal has already been approved.');
-        }
-
-        $withdrawal->status = 'approved';
-        $withdrawal->admin_note = null;
-        $withdrawal->save();
-
-        $user = $withdrawal->user;
-
-        $user->notify(new TransactionNotification(
-            'Withdrawal Approved',
-            'Your withdrawal request of $' . number_format($withdrawal->amount, 2) . ' has been approved.'
-        ));
-
-        return back()->with('success', 'Withdrawal approved successfully.');
-    }
 
 
+public function approveBalanceWithdrawal($id)
+{
+$withdrawal = Withdrawal::findOrFail($id);
+
+if ($withdrawal->status === 'approved') {
+    return back()->with('error', 'This withdrawal has already been approved.');
+}
+
+// Approve the withdrawal first
+$withdrawal->status = 'approved';
+$withdrawal->admin_note = null;
+$withdrawal->save();
+
+$user = $withdrawal->user;
+
+// Send notification, but do not let an email/SMTP failure
+// prevent the withdrawal approval from completing.
+try {
+
+    $user->notify(new TransactionNotification(
+        'Withdrawal Approved',
+        'Your withdrawal request of $' . number_format($withdrawal->amount, 2) . ' has been approved.'
+    ));
+
+} catch (\Throwable $e) {
+
+    \Log::error('Withdrawal approval notification failed', [
+        'withdrawal_id' => $withdrawal->id,
+        'user_id'       => $user->id ?? null,
+        'error'         => $e->getMessage(),
+    ]);
+
+}
+
+return back()->with(
+    'success',
+    'Withdrawal approved successfully.'
+);
+
+}
 
     public function index()
     {
